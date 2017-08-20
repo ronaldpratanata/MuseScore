@@ -402,6 +402,8 @@ class MuseScore : public QMainWindow, public MuseScoreCore {
       QAction* loopInAction;
       QAction* loopOutAction;
       QAction* panAction;
+      QAction* tutorAction;
+      QAction* tutorWaitAction;
 
       QLabel* cornerLabel;
       QStringList _recentScores;
@@ -688,6 +690,8 @@ class MuseScore : public QMainWindow, public MuseScoreCore {
       void updatePlayMode();
       bool loop() const              { return loopAction->isChecked(); }
       bool metronome() const         { return metronomeAction->isChecked(); }
+      bool tutor() const             { return tutorAction->isChecked(); }
+      bool tutorWait() const         { return tutorWaitAction->isChecked(); }
       bool countIn() const           { return countInAction->isChecked(); }
       bool panDuringPlayback() const { return panAction->isChecked(); }
       void noteTooShortForTupletDialog();

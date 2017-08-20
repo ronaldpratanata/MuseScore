@@ -2865,6 +2865,28 @@ Shortcut Shortcut::_sc[] = {
          ShortcutFlags::A_CHECKABLE
          },
       {
+         MsWidget::MAIN_WINDOW,
+         STATE_NORMAL | STATE_NOTE_ENTRY | STATE_PLAY | STATE_EDIT ,
+         "tutor",
+         QT_TRANSLATE_NOOP("action","Tutor"),
+         QT_TRANSLATE_NOOP("action","Toggle tutor playback"),
+         QT_TRANSLATE_NOOP("action","Play tutor during playback"),
+         Icons::tutor_ICON,
+         Qt::WindowShortcut,
+         ShortcutFlags::A_CHECKABLE
+         },
+      {
+         MsWidget::MAIN_WINDOW,
+         STATE_NORMAL | STATE_NOTE_ENTRY | STATE_PLAY | STATE_EDIT ,
+         "tutor-wait",
+         QT_TRANSLATE_NOOP("action","TutorWait"),
+         QT_TRANSLATE_NOOP("action","Wait for player during tutor playback"),
+         QT_TRANSLATE_NOOP("action","Wait for player during tutor playback"),
+         Icons::tutorWait_ICON,
+         Qt::WindowShortcut,
+         ShortcutFlags::A_CHECKABLE
+         },
+      {
          MsWidget::SCORE_TAB,
          STATE_NORMAL | STATE_NOTE_ENTRY,
          "figured-bass",

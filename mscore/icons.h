@@ -49,6 +49,7 @@ enum class Icons : signed char { Invalid_ICON = -1,
       formatListUnordered_ICON, formatListOrdered_ICON,
       formatIndentMore_ICON, formatIndentLess_ICON,
       loop_ICON, loopIn_ICON, loopOut_ICON, metronome_ICON, countin_ICON,
+      tutor_ICON, tutorWait_ICON,
       vframe_ICON, hframe_ICON, tframe_ICON, fframe_ICON, measure_ICON, checkmark_ICON,
       helpContents_ICON, goHome_ICON, goPrevious_ICON, goNext_ICON, viewRefresh_ICON,
       parentheses_ICON,
@@ -57,6 +58,7 @@ enum class Icons : signed char { Invalid_ICON = -1,
       timesig_prolatio03_ICON, timesig_prolatio04_ICON, timesig_prolatio05_ICON, timesig_prolatio07_ICON,
       timesig_prolatio08_ICON, timesig_prolatio10_ICON, timesig_prolatio11_ICON, edit_ICON, reset_ICON, close_ICON,
       arrowUp_ICON, arrowDown_ICON,
+      // Keep voice*_ICON onwards as last row here, before ICONS
       voice1_ICON, voice2_ICON, voice3_ICON, voice4_ICON,
       ICONS
       };

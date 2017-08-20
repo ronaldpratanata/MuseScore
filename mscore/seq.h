@@ -27,6 +27,7 @@
 #include "driver.h"
 #include "libmscore/fifo.h"
 #include "libmscore/tempo.h"
+#include "tutor.h"
 
 class QTimer;
 
@@ -158,6 +159,8 @@ class Seq : public QObject, public Sequencer {
       QTimer* heartBeatTimer;
       QTimer* noteTimer;
 
+      Tutor tutor;
+
       void collectMeasureEvents(Measure*, int staffIdx);
 
       void setPos(int);
@@ -255,6 +258,8 @@ class Seq : public QObject, public Sequencer {
 
       void setInitialMillisecondTimestampWithLatency();
       unsigned getCurrentMillisecondTimestampWithLatency(unsigned framePos) const;
+
+      void midiNoteReceived(int channel, int pitch, int velo);
       };
 
 extern Seq* seq;

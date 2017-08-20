@@ -518,8 +518,11 @@ void Seq::playEvent(const NPlayEvent& event, unsigned framePos)
                   const Channel* a = instr->channel(note->subchannel());
                   mute = a->mute || a->soloMute || !staff->playbackVoice(note->voice());
                   }
-            if (!mute)
-                  putEvent(event, framePos);
+            if (!mute) {
+		putEvent(event, framePos);
+		if (mscore->tutor())
+		  tutor.addKey(event.pitch(), event.velo(), event.channel());
+	        }
             }
       else if (type == ME_CONTROLLER || type == ME_PITCHBEND)
             putEvent(event, framePos);
@@ -676,6 +679,8 @@ void Seq::process(unsigned framesPerPeriod, float* buffer)
       if (driverState != state) {
             // Got a message from JACK Transport panel: Play
             if (state == Transport::STOP && driverState == Transport::PLAY) {
+                  if (mscore->tutor())
+		        tutor.clearKeys();
                   if ((preferences.getBool(PREF_IO_JACK_USEJACKMIDI) || preferences.getBool(PREF_IO_JACK_USEJACKAUDIO)) && !getAction("play")->isChecked()) {
                         // Do not play while editing elements
                         if (mscore->state() != STATE_NORMAL || !isRunning() || !canStart())
@@ -714,6 +719,8 @@ void Seq::process(unsigned framesPerPeriod, float* buffer)
             // Got a message from JACK Transport panel: Stop
             else if (state == Transport::PLAY && driverState == Transport::STOP) {
                   state = Transport::STOP;
+		  if (mscore->tutor())
+		    tutor.clearKeys();
                   // Muting all notes
                   stopNotes(-1, true);
                   initInstruments(true);
@@ -763,6 +770,13 @@ void Seq::process(unsigned framesPerPeriod, float* buffer)
             unsigned framePos = 0; // frame currently being processed relative to the first frame of this call to Seq::process
             int periodEndFrame = *pPlayFrame + framesPerPeriod; // the ending frame (relative to start of playback) of the period being processed by this call to Seq::process
             int scoreEndUTick = cs->repeatList()->tick2utick(cs->lastMeasure()->endTick());
+	    if (mscore->tutor() && mscore->tutorWait() && tutor.size() > 0) {
+	      if (framesRemain && cs->playMode() == PlayMode::SYNTHESIZER) {
+		//metronome(framesRemain, p, inCountIn);
+		_synti->process(framesRemain, p);
+		return;
+	      }
+	    }
             while (*pPlayPos != pEvents->cend()) {
                   int playPosUTick = (*pPlayPos)->first;
                   int n; // current frame (relative to start of playback) that is being synthesized
@@ -1354,6 +1368,12 @@ void Seq::midiInputReady()
       if (_driver)
             _driver->midiRead();
       }
+
+void Seq::midiNoteReceived(int channel, int pitch, int velo) {
+  qDebug("Got MIDI event: ch=%d, pitch=%d, vel=%d\n", channel, pitch, velo);
+  if (mscore->tutor() && velo > 0)
+    tutor.clearKey(pitch);
+}
 
 //---------------------------------------------------------
 //   SeqMsgFifo

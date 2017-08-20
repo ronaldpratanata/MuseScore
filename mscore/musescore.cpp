@@ -666,6 +666,8 @@ MuseScore::MuseScore()
       metronomeAction = getAction("metronome");
       countInAction   = getAction("countin");
       panAction       = getAction("pan");
+      tutorAction     = getAction("tutor");
+      tutorWaitAction = getAction("tutor-wait");
 
       _statusBar = new QStatusBar;
       _statusBar->addPermanentWidget(new QWidget(this), 2);
@@ -845,6 +847,8 @@ MuseScore::MuseScore()
       transportTools->addWidget(new AccessibleToolButton(transportTools, repeatAction));
       transportTools->addWidget(new AccessibleToolButton(transportTools, getAction("pan")));
       transportTools->addWidget(new AccessibleToolButton(transportTools, metronomeAction));
+      transportTools->addWidget(new AccessibleToolButton(transportTools, tutorAction));
+      transportTools->addWidget(new AccessibleToolButton(transportTools, tutorWaitAction));
 
       //-------------------------------
       //    Concert Pitch Tool Bar
@@ -2289,6 +2293,9 @@ void MuseScore::midiNoteReceived(int channel, int pitch, int velo)
       static int active = 0;
       static int iterDrums = 0;
       static int activeDrums = 0;
+
+      if (seq)
+	seq->midiNoteReceived(channel, pitch, velo);
 
       if (!midiinEnabled())
             return;
