@@ -129,6 +129,7 @@ static const char* iconNames[] = {
       "media-playback-countin.svg",
       "tutor.svg",
       "tutor.svg",
+      "tutor.svg",
       "frame-vertical.svg",
       "frame-horizontal.svg",
       "frame-text.svg",

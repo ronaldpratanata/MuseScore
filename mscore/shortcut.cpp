@@ -2887,6 +2887,17 @@ Shortcut Shortcut::_sc[] = {
          ShortcutFlags::A_CHECKABLE
          },
       {
+         MsWidget::MAIN_WINDOW,
+         STATE_NORMAL | STATE_NOTE_ENTRY | STATE_PLAY | STATE_EDIT ,
+         "tutor-look-ahead",
+         QT_TRANSLATE_NOOP("action","TutorLooAhead"),
+         QT_TRANSLATE_NOOP("action","Show future notes during tutor playback"),
+         QT_TRANSLATE_NOOP("action","Show future notes during tutor playback"),
+         Icons::tutorLookAhead_ICON,
+         Qt::WindowShortcut,
+         ShortcutFlags::A_CHECKABLE
+         },
+      {
          MsWidget::SCORE_TAB,
          STATE_NORMAL | STATE_NOTE_ENTRY,
          "figured-bass",

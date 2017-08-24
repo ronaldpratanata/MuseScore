@@ -27,7 +27,15 @@
 static const char *TUTOR_SERIAL_DEVICE="/dev/ttyACM0";
 static const char *TUTOR_SERIAL_DEVICE2="/dev/ttyACM1";
 
-Tutor::Tutor() : tutorSerial(-1) {  }
+static char cmd[1024];
+static char *curr_cmd = cmd;
+
+Tutor::Tutor() : tutorSerial(-1), num_curr_events(0) {
+  // mark all notes as unused
+  for (int i = 0; i < 256; i++) {
+    notes[i].velo = -1;
+  }
+}
 
 bool Tutor::checkSerial() {
   if (tutorSerial > 0)
@@ -65,36 +73,48 @@ bool Tutor::checkSerial() {
 
 static void safe_write(int fd, char *data, int len) {
   data[len] = '\0';
-  qDebug("Writing to serial: <%s>\n", data);
+  //printf("Writing to serial: <%s>\n", data);
   while (len > 0) {
-    int written = write(fd, data, len);
+    tcdrain(fd);
+    int written = write(fd, data, (len < 17 ? len : 17));
     if (written < 0) {
       perror("write() failed!");
       return;
     }
     data += written;
     len -= written;
+    usleep(10000);
   }
-  usleep(10000);
-  //fsync(fd);
-  tcflush(fd, TCIOFLUSH);
+}
+
+void Tutor::flushNoLock() {
+  if (curr_cmd > cmd && checkSerial()) {
+    safe_write(tutorSerial, cmd, curr_cmd - cmd);
+    curr_cmd = cmd;
+  }
 }
 
 int colors[][3] = {
-  { 50, 0, 0},
-  { 0, 50, 0}
+  { 50, 0, 50},
+  { 0, 50, 50}
 };
 
-void Tutor::setTutorLight(int pitch, int velo, int channel) {
+void Tutor::setTutorLight(int pitch, int velo, int channel, int future) {
   if (pitch >= 24)
     pitch -= 24;
   if (checkSerial()) {
-    char cmd[18];
     int r = colors[channel % 2][0];
     int g = colors[channel % 2][1];
     int b = colors[channel % 2][2];
-    int cmdlen = sprintf(cmd, "k%03dr%03dg%03db%03d\n", pitch*2, r, g, b);
-    safe_write(tutorSerial, cmd, cmdlen);
+    if (future > 0) {
+      r /= 10;
+      g /= 10;
+      b /= 10;
+    }
+    int cmdlen = snprintf(curr_cmd, sizeof(cmd) - 1 - (curr_cmd - cmd),
+			  "k%03dr%03dg%03db%03d ", pitch*2, r, g, b);
+    curr_cmd += cmdlen;
+    //safe_write(tutorSerial, cmd, cmdlen);
   }
 }
 
@@ -102,38 +122,61 @@ void Tutor::clearTutorLight(int pitch) {
   if (pitch >= 24)
     pitch -= 24;
   if (checkSerial()) {
-    char cmd[18];
-    int cmdlen = sprintf(cmd, "k%03dr%03dg%03db%03d\n", pitch*2, 0, 0, 0);
-    safe_write(tutorSerial, cmd, cmdlen);
+    int cmdlen = snprintf(curr_cmd, sizeof(cmd) - 1 - (curr_cmd - cmd),
+			  "k%03dr%03dg%03db%03d ", pitch*2, 0, 0, 0);
+    curr_cmd += cmdlen;
+    //safe_write(tutorSerial, cmd, cmdlen);
   }
 }
 
-void Tutor::addKey(int pitch, int velo, int channel) {
+void Tutor::addKey(int pitch, int velo, int channel, int future) {
   if (velo == 0) {
     clearKey(pitch);
     return;
   }
+  pitch &= 255;
   std::lock_guard<std::mutex> lock(mtx);
-  tutorEvents.push_back((tnote) {pitch, velo, channel});
-  setTutorLight(pitch, velo, channel);
+  tnote & n = notes[pitch];
+  if (velo == n.velo && channel == n.channel && future == n.future)
+    return;
+  if (n.velo != -1) {
+    if (future == 0 && n.future > 0)
+      ++num_curr_events;
+    if (future > n.future || (future == n.future && velo < n.velo))
+      return;
+  } else {
+    if (future == 0)
+      ++num_curr_events;
+  }
+  n = (tnote) {velo, channel, future};
+  setTutorLight(pitch, velo, channel, future);
 }
 
 void Tutor::clearKey(int pitch) {
+  pitch &= 255;
   std::lock_guard<std::mutex> lock(mtx);
-  for (auto it = tutorEvents.begin(); it != tutorEvents.end(); /* nothing */) {
-    //qDebug("Comparing with: pitch=%d, vel=%d\n", it->pitch, it->velo);
-    if (it->pitch == pitch) {
-      //qDebug("Match!\n");
-      clearTutorLight(pitch);
-      it = tutorEvents.erase(it);
-    } else
-      ++it;
+  tnote & n = notes[pitch];
+  if (n.velo != -1) {
+    clearTutorLight(pitch);
+    if (n.future == 0)
+      --num_curr_events;
+    n.velo = -1;
   }
 }
 
 void Tutor::clearKeys() {
   std::lock_guard<std::mutex> lock(mtx);
-  for (auto it = tutorEvents.begin(); it != tutorEvents.end(); ++it)
-    clearTutorLight(it->pitch);
-  tutorEvents.clear();
+  for (int i = 0; i < (int) (sizeof(notes) / sizeof(notes[0])); ++i) {
+    if (notes[i].velo != -1) {
+      notes[i].velo = -1;
+      clearTutorLight(i);
+    }
+  }
+  flushNoLock();
+  num_curr_events = 0;
+}
+
+void Tutor::flush() {
+  std::lock_guard<std::mutex> lock(mtx);
+  flushNoLock();
 }

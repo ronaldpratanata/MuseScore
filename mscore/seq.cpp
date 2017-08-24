@@ -48,6 +48,8 @@
 
 #include <vorbis/vorbisfile.h>
 
+#include <time.h>
+
 #if defined(Q_OS_MAC) || defined(Q_OS_WIN)
   #include "portmidi/porttime/porttime.h"
 #else
@@ -520,8 +522,10 @@ void Seq::playEvent(const NPlayEvent& event, unsigned framePos)
                   }
             if (!mute) {
 		putEvent(event, framePos);
-		if (mscore->tutor())
+		if (mscore->tutor()) {
+		  //printf("Adding event: pitch=%d, velo=%d, ch=%d\n", event.pitch(), event.velo(), event.channel());
 		  tutor.addKey(event.pitch(), event.velo(), event.channel());
+		  }
 	        }
             }
       else if (type == ME_CONTROLLER || type == ME_PITCHBEND)
@@ -661,6 +665,50 @@ void Seq::addCountInClicks()
       countInPlayFrame = 0;
       }
 
+void Seq::tutorFutureEvents(EventMap::const_iterator it, EventMap::const_iterator it_end, unsigned framesPerPeriod)
+{
+  int i = 32;	// max number of events we're going through for look-ahead key presses
+  int endFrame = -1;
+  //struct timespec ts_beg, ts_end;
+  //clock_gettime(CLOCK_REALTIME, &ts_beg);
+  while (it != it_end && i-- > 0) {
+    int playPosUTick = it->first;
+    if (mscore->loop()) {
+      int loopOutUTick = cs->repeatList()->tick2utick(cs->loopOutTick());
+      //printf("playUTick: %d, loopOut: %d\n", playPosUTick, loopOutUTick);
+      if (playPosUTick >= loopOutUTick)
+	break;
+    }
+    qreal playPosSeconds = cs->utick2utime(playPosUTick);
+    int playPosFrame = playPosSeconds * MScore::sampleRate;
+    //printf("endFrame: %d, playPosFrame: %d\n", endFrame, playPosFrame);
+    if (endFrame != -1 && playPosFrame > endFrame)
+      break;
+    const NPlayEvent& event = it->second;
+    int type = event.type();
+    if (type == ME_NOTEON) {
+      bool mute = false;
+      const Note* note = event.note();
+
+      if (note) {
+	Staff* staff      = note->staff();
+	Instrument* instr = staff->part()->instrument(note->chord()->tick());
+	const Channel* a = instr->channel(note->subchannel());
+	mute = a->mute || a->soloMute || !staff->playbackVoice(note->voice());
+      }
+      if (!mute && event.velo() > 0) {
+	//printf("Adding future event: pitch=%d, velo=%d, ch=%d\n", event.pitch(), event.velo(), event.channel());
+	tutor.addKey(event.pitch(), event.velo(), event.channel(), 1);
+	if (endFrame == -1)
+	  endFrame = playPosFrame + framesPerPeriod;
+      }
+    }
+    ++it;
+  }
+  //clock_gettime(CLOCK_REALTIME, &ts_end);
+  //printf("elapsed: %ld us\n", (ts_end.tv_sec - ts_beg.tv_sec) * 1000000 + (ts_end.tv_nsec - ts_beg.tv_nsec) / 1000);
+}
+
 //-------------------------------------------------------------------
 //   process
 //    This function is called in a realtime context. This
@@ -770,6 +818,7 @@ void Seq::process(unsigned framesPerPeriod, float* buffer)
             unsigned framePos = 0; // frame currently being processed relative to the first frame of this call to Seq::process
             int periodEndFrame = *pPlayFrame + framesPerPeriod; // the ending frame (relative to start of playback) of the period being processed by this call to Seq::process
             int scoreEndUTick = cs->repeatList()->tick2utick(cs->lastMeasure()->endTick());
+	    //printf("size(): %d\n", tutor.size());
 	    if (mscore->tutor() && mscore->tutorWait() && tutor.size() > 0) {
 	      if (framesRemain && cs->playMode() == PlayMode::SYNTHESIZER) {
 		//metronome(framesRemain, p, inCountIn);
@@ -908,7 +957,12 @@ void Seq::process(unsigned framesPerPeriod, float* buffer)
                         }
                   else
                         _driver->stopTransport();
-                  }
+	          }
+	    if (mscore->tutor()) {
+	      if (mscore->tutorLookAhead())
+		tutorFutureEvents(*pPlayPos, pEvents->cend(), framesPerPeriod);
+	      tutor.flush();
+              }
             }
       else {
             // Outside of playback mode
@@ -1371,8 +1425,11 @@ void Seq::midiInputReady()
 
 void Seq::midiNoteReceived(int channel, int pitch, int velo) {
   qDebug("Got MIDI event: ch=%d, pitch=%d, vel=%d\n", channel, pitch, velo);
-  if (mscore->tutor() && velo > 0)
+  if (mscore->tutor() && velo > 0) {
+    //printf("Clearing event: pitch=%d\n", pitch);
     tutor.clearKey(pitch);
+    tutor.flush();
+  }
 }
 
 //---------------------------------------------------------

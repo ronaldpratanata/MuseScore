@@ -668,6 +668,7 @@ MuseScore::MuseScore()
       panAction       = getAction("pan");
       tutorAction     = getAction("tutor");
       tutorWaitAction = getAction("tutor-wait");
+      tutorLookAheadAction = getAction("tutor-look-ahead");
 
       _statusBar = new QStatusBar;
       _statusBar->addPermanentWidget(new QWidget(this), 2);
@@ -849,6 +850,7 @@ MuseScore::MuseScore()
       transportTools->addWidget(new AccessibleToolButton(transportTools, metronomeAction));
       transportTools->addWidget(new AccessibleToolButton(transportTools, tutorAction));
       transportTools->addWidget(new AccessibleToolButton(transportTools, tutorWaitAction));
+      transportTools->addWidget(new AccessibleToolButton(transportTools, tutorLookAheadAction));
 
       //-------------------------------
       //    Concert Pitch Tool Bar

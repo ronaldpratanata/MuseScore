@@ -171,6 +171,8 @@ class Seq : public QObject, public Sequencer {
       void unmarkNotes();
       void updateSynthesizerState(int tick1, int tick2);
       void addCountInClicks();
+      void tutorFutureEvents(EventMap::const_iterator it, EventMap::const_iterator it_end,
+			     unsigned framesPerPeriod);
 
       inline QQueue<NPlayEvent>* liveEventQueue() { return &_liveEventQueue; }
 

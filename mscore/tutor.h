@@ -20,31 +20,34 @@
 #ifndef __TUTOR_H__
 #define __TUTOR_H__
 
-#include <list>
 #include <thread>
 #include <mutex>
 
 typedef struct {
-  int pitch;
   int velo;
   int channel;
+  int future;
 } tnote;
 
 // Arduino-assisted NeoPixel-based PianoTutor helper class
 class Tutor {
       int tutorSerial;		// serial port file descriptor
-      std::list<tnote> tutorEvents;
-      bool checkSerial();
-      void setTutorLight(int pitch, int velo, int channel);
-      void clearTutorLight(int pitch);
+      tnote notes[256];		// addressed by pitch, .velo = -1 means unused
       std::mutex mtx;
+      int num_curr_events;
+
+      bool checkSerial();
+      void setTutorLight(int pitch, int velo, int channel, int future);
+      void clearTutorLight(int pitch);
+      void flushNoLock();
 
  public:
       Tutor();
-      void addKey(int pitch, int velo, int channel);
+      void addKey(int pitch, int velo, int channel, int future = 0);
       void clearKey(int pitch);
       void clearKeys();
-      size_t size() { return tutorEvents.size(); }
+      size_t size() { return num_curr_events; }
+      void flush();
 };
 
 #endif
