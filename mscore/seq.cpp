@@ -1425,10 +1425,28 @@ void Seq::midiInputReady()
 
 void Seq::midiNoteReceived(int channel, int pitch, int velo) {
   qDebug("Got MIDI event: ch=%d, pitch=%d, vel=%d\n", channel, pitch, velo);
-  if (mscore->tutor() && velo > 0) {
+  if (!mscore->tutor() || velo == 0)
+    return;
+  const tnote *pn = tutor.getKey(pitch);
+  if (pn == 0)
+    return;
+  if (pn->future == 0) {
     //printf("Clearing event: pitch=%d\n", pitch);
     tutor.clearKey(pitch);
     tutor.flush();
+  } else if (pn->future == 1 && tutor.size() == 0) {
+    //printf("Clearing event: pitch=%d\n", pitch);
+    tutor.clearKey(pitch);
+    // speed-up execution jumping to future event playPos
+    for (auto it = playPos; it != events.end(); ++it) {
+      const NPlayEvent& event = it->second;
+      if (event.type() == ME_NOTEON && event.pitch() == pitch && event.velo() > 0) {
+	if (it->first > playPos->first)
+	  seek(it->first);
+	break;
+      }
+    }
+
   }
 }
 

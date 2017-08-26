@@ -23,6 +23,7 @@
 
 #include <stdio.h>
 #include <termios.h>
+#include <time.h>
 
 static const char *TUTOR_SERIAL_DEVICE="/dev/ttyACM0";
 static const char *TUTOR_SERIAL_DEVICE2="/dev/ttyACM1";
@@ -130,6 +131,7 @@ void Tutor::clearTutorLight(int pitch) {
 }
 
 void Tutor::addKey(int pitch, int velo, int channel, int future) {
+  struct timespec prev = {0, 0};
   if (velo == 0) {
     clearKey(pitch);
     return;
@@ -140,16 +142,34 @@ void Tutor::addKey(int pitch, int velo, int channel, int future) {
   if (velo == n.velo && channel == n.channel && future == n.future)
     return;
   if (n.velo != -1) {
-    if (future == 0 && n.future > 0)
+    if (future == 0 && n.future > 0) {
       ++num_curr_events;
+      if (n.ts.tv_sec != 0 || n.ts.tv_nsec != 0)
+	prev = n.ts;
+    }
     if (future > n.future || (future == n.future && velo < n.velo))
       return;
   } else {
     if (future == 0)
       ++num_curr_events;
   }
-  n = (tnote) {velo, channel, future};
+  n = (tnote) {velo, channel, future, {0, 0}};
   setTutorLight(pitch, velo, channel, future);
+
+  // Future keys pressed less than 100ms ago are automatically cleared
+  // Purposedly light up then turn off LED (unless too fast to be visible)
+  if (prev.tv_sec != 0 || prev.tv_nsec != 0) {
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    unsigned long diff_us =
+      (now.tv_sec - prev.tv_sec) * 1000000 + (now.tv_nsec - prev.tv_nsec) / 1000;
+    if (diff_us < 100000) {
+      clearTutorLight(pitch);
+      --num_curr_events;
+      n.velo = -1;
+    }
+    //printf("pitch %d, diff_us: %lu, size: %d\n", pitch, diff_us, num_curr_events);
+  }
 }
 
 void Tutor::clearKey(int pitch) {
@@ -157,10 +177,14 @@ void Tutor::clearKey(int pitch) {
   std::lock_guard<std::mutex> lock(mtx);
   tnote & n = notes[pitch];
   if (n.velo != -1) {
-    clearTutorLight(pitch);
-    if (n.future == 0)
+    if (n.future == 0) {
+      clearTutorLight(pitch);
       --num_curr_events;
-    n.velo = -1;
+      n.velo = -1;
+    } else {
+      clock_gettime(CLOCK_MONOTONIC, &n.ts);
+      //printf("Marking time for pitch %d\n", pitch);
+    }
   }
 }
 

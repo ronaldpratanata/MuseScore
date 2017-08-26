@@ -27,6 +27,7 @@ typedef struct {
   int velo;
   int channel;
   int future;
+  struct timespec ts;	// last press abs time
 } tnote;
 
 // Arduino-assisted NeoPixel-based PianoTutor helper class
@@ -45,6 +46,8 @@ class Tutor {
       Tutor();
       void addKey(int pitch, int velo, int channel, int future = 0);
       void clearKey(int pitch);
+      // Return 0 if invalid
+      const tnote *getKey(int pitch) { return notes[pitch].velo != -1 ? &notes[pitch] : NULL; }
       void clearKeys();
       size_t size() { return num_curr_events; }
       void flush();
