@@ -72,14 +72,16 @@ bool Tutor::checkSerial() {
   return false;
 }
 
-static void safe_write(int fd, char *data, int len) {
+void Tutor::safe_write(char *data, int len) {
   data[len] = '\0';
   //printf("Writing to serial: <%s>\n", data);
   while (len > 0) {
-    tcdrain(fd);
-    int written = write(fd, data, (len < 17 ? len : 17));
+    tcdrain(tutorSerial);
+    int written = write(tutorSerial, data, (len < 17 ? len : 17));
     if (written < 0) {
       perror("write() failed!");
+      close(tutorSerial);
+      tutorSerial = -1;
       return;
     }
     data += written;
@@ -90,7 +92,7 @@ static void safe_write(int fd, char *data, int len) {
 
 void Tutor::flushNoLock() {
   if (curr_cmd > cmd && checkSerial()) {
-    safe_write(tutorSerial, cmd, curr_cmd - cmd);
+    safe_write(cmd, curr_cmd - cmd);
     curr_cmd = cmd;
   }
 }
@@ -115,7 +117,7 @@ void Tutor::setTutorLight(int pitch, int velo, int channel, int future) {
     int cmdlen = snprintf(curr_cmd, sizeof(cmd) - 1 - (curr_cmd - cmd),
 			  "k%03dr%03dg%03db%03d ", pitch*2, r, g, b);
     curr_cmd += cmdlen;
-    //safe_write(tutorSerial, cmd, cmdlen);
+    //safe_write(cmd, cmdlen);
   }
 }
 
@@ -126,7 +128,7 @@ void Tutor::clearTutorLight(int pitch) {
     int cmdlen = snprintf(curr_cmd, sizeof(cmd) - 1 - (curr_cmd - cmd),
 			  "k%03dr%03dg%03db%03d ", pitch*2, 0, 0, 0);
     curr_cmd += cmdlen;
-    //safe_write(tutorSerial, cmd, cmdlen);
+    //safe_write(cmd, cmdlen);
   }
 }
 

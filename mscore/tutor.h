@@ -41,6 +41,7 @@ class Tutor {
       void setTutorLight(int pitch, int velo, int channel, int future);
       void clearTutorLight(int pitch);
       void flushNoLock();
+      void safe_write(char *data, int len);
 
  public:
       Tutor();
