@@ -35,7 +35,7 @@ endif (SCRIPT_INTERFACE)
 
 QT5_WRAP_UI (ui_headers
       insertmeasuresdialog.ui editinstrument.ui editstyle.ui instrdialog.ui instrwidget.ui
-      measuresdialog.ui pagesettings.ui mixer.ui playpanel.ui prefsdialog.ui measureproperties.ui
+      measuresdialog.ui pagesettings.ui mixer.ui playpanel.ui pianotutorpanel.ui prefsdialog.ui measureproperties.ui
       textpalette.ui  timedialog.ui symboldialog.ui  shortcutcapturedialog.ui  editdrumset.ui
       editstaff.ui timesigproperties.ui
       instrwizard.ui timesigwizard.ui newwizard.ui aboutbox.ui aboutmusicxmlbox.ui
@@ -247,7 +247,7 @@ add_executable ( ${ExecutableName}
       debugger/debugger.cpp menus.cpp
       musescore.cpp navigator.cpp pagesettings.cpp palette.cpp
       timeline.cpp
-      mixer.cpp playpanel.cpp selectionwindow.cpp preferences.cpp measureproperties.cpp
+      mixer.cpp playpanel.cpp pianotutorpanel.cpp selectionwindow.cpp preferences.cpp measureproperties.cpp
       seq.cpp tutor.cpp textpalette.cpp
       timedialog.cpp symboldialog.cpp shortcutcapturedialog.cpp
       simplebutton.cpp musedata.cpp

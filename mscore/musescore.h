@@ -34,6 +34,7 @@
 #include "libmscore/musescoreCore.h"
 #include "libmscore/score.h"
 #include "newwizard.h"
+#include "pianotutorpanel.h"
 
 namespace Ms {
 
@@ -48,6 +49,7 @@ class Instrument;
 class MidiFile;
 class TextStyleDialog;
 class PlayPanel;
+class PianoTutorPanel;
 class Mixer;
 class Debugger;
 class MeasureListEditor;
@@ -248,6 +250,7 @@ class MuseScore : public QMainWindow, public MuseScoreCore {
       MagBox* mag;
       QComboBox* viewModeCombo;
       QAction* playId;
+      QAction* tutorId;
 
       QAction* pref;
       QAction* onlineHandbookAction;
@@ -307,6 +310,7 @@ class MuseScore : public QMainWindow, public MuseScoreCore {
       QComboBox* searchCombo;
 
       PlayPanel* playPanel                 { 0 };
+      PianoTutorPanel* pianoTutorPanel     { 0 };
       Mixer* mixer                         { 0 };
       SynthControl* synthControl           { 0 };
       Debugger* debugger                   { 0 };
@@ -542,6 +546,7 @@ class MuseScore : public QMainWindow, public MuseScoreCore {
       ~MuseScore();
       bool checkDirty(MasterScore*);
       PlayPanel* getPlayPanel() const { return playPanel; }
+      PianoTutorPanel* getPianoTutorPanel() const { return pianoTutorPanel; }
       Mixer* getMixer() const { return mixer; }
       QMenu* genCreateMenu(QWidget* parent = 0);
       virtual int appendScore(MasterScore*);
@@ -691,9 +696,9 @@ class MuseScore : public QMainWindow, public MuseScoreCore {
       void updatePlayMode();
       bool loop() const              { return loopAction->isChecked(); }
       bool metronome() const         { return metronomeAction->isChecked(); }
-      bool tutor() const             { return tutorAction->isChecked(); }
-      bool tutorWait() const         { return tutorWaitAction->isChecked(); }
-      bool tutorLookAhead() const    { return tutorLookAheadAction->isChecked(); }
+      bool tutor() const             { return pianoTutorPanel != 0 && pianoTutorPanel->tutorEnabled(); }
+      bool tutorWait() const         { return pianoTutorPanel != 0 && pianoTutorPanel->tutorWait(); }
+      bool tutorLookAhead() const    { return pianoTutorPanel != 0 && pianoTutorPanel->tutorLookAhead(); }
       bool countIn() const           { return countInAction->isChecked(); }
       bool panDuringPlayback() const { return panAction->isChecked(); }
       void noteTooShortForTupletDialog();
@@ -744,6 +749,7 @@ class MuseScore : public QMainWindow, public MuseScoreCore {
 
       Q_INVOKABLE void showStartcenter(bool);
       void showPlayPanel(bool);
+      void showPianoTutorPanel(bool);
 
       QFileInfoList recentScores() const;
       void saveDialogState(const char* name, QFileDialog* d);

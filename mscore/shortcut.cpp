@@ -1888,6 +1888,16 @@ Shortcut Shortcut::_sc[] = {
          },
       {
          MsWidget::MAIN_WINDOW,
+         STATE_NORMAL | STATE_NOTE_ENTRY | STATE_EDIT | STATE_PLAY,
+         "toggle-pianotutor",
+         QT_TRANSLATE_NOOP("action","Piano Tutor Panel"),
+         QT_TRANSLATE_NOOP("action","Piano tutor panel"),
+         0,
+         Icons::tutor_ICON,
+         Qt::ApplicationShortcut
+         },
+      {
+         MsWidget::MAIN_WINDOW,
          STATE_DISABLED | STATE_NORMAL | STATE_NOTE_ENTRY | STATE_EDIT | STATE_TEXT_EDIT | STATE_PLAY | STATE_FOTO,
          "quit",
          QT_TRANSLATE_NOOP("action","Quit")

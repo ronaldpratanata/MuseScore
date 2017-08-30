@@ -32,6 +32,7 @@
 #include "debugger/debugger.h"
 #include "editstyle.h"
 #include "playpanel.h"
+#include "pianotutorpanel.h"
 #include "libmscore/page.h"
 #include "mixer.h"
 #include "selectionwindow.h"
@@ -1027,6 +1028,10 @@ MuseScore::MuseScore()
       a = getAction("toggle-piano");
       a->setCheckable(true);
       menuView->addAction(a);
+
+      tutorId = getAction("toggle-pianotutor");
+      tutorId->setCheckable(true);
+      menuView->addAction(tutorId);
 
       menuView->addSeparator();
       menuView->addAction(getAction("zoomin"));
@@ -2166,6 +2171,34 @@ void MuseScore::showPlayPanel(bool visible)
       playPanel->setVisible(visible);
       playPanel->setFloating(false);
       playId->setChecked(visible);
+      }
+
+
+//---------------------------------------------------------
+//   showPianoTutorPanel
+//---------------------------------------------------------
+
+void MuseScore::showPianoTutorPanel(bool visible)
+      {
+      if (noSeq || !(seq && seq->isRunning()))
+            return;
+      if (pianoTutorPanel == 0) {
+            if (!visible)
+                  return;
+            pianoTutorPanel = new PianoTutorPanel(this);
+            // connect(playPanel, SIGNAL(gainChange(float)),     synti, SLOT(setGain(float)));
+            // connect(playPanel, SIGNAL(metronomeGainChanged(float)), seq, SLOT(setMetronomeGain(float)));
+            // connect(playPanel, SIGNAL(relTempoChanged(double)),seq, SLOT(setRelTempo(double)));
+            // connect(playPanel, SIGNAL(posChange(int)),         seq, SLOT(seek(int)));
+            // connect(playPanel, SIGNAL(closed(bool)),          playId,   SLOT(setChecked(bool)));
+            // connect(synti,     SIGNAL(gainChanged(float)), playPanel, SLOT(setGain(float)));
+            // playPanel->setGain(synti->gain());
+            // playPanel->setScore(cs);
+            addDockWidget(Qt::RightDockWidgetArea, pianoTutorPanel);
+	    pianoTutorPanel->setFloating(false);
+            }
+      pianoTutorPanel->setVisible(visible);
+      tutorId->setChecked(visible);
       }
 
 //---------------------------------------------------------
@@ -4979,6 +5012,8 @@ void MuseScore::cmd(QAction* a, const QString& cmd)
 #endif
       else if (cmd == "toggle-playpanel")
             showPlayPanel(a->isChecked());
+      else if (cmd == "toggle-pianotutor")
+            showPianoTutorPanel(a->isChecked());
       else if (cmd == "toggle-navigator")
             showNavigator(a->isChecked());
       else if (cmd == "toggle-timeline")
