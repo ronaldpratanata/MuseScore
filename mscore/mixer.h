@@ -71,7 +71,7 @@ class PartEdit : public QWidget, public Ui::PartEditBase {
 //   Mixer
 //---------------------------------------------------------
 
-class Mixer : public QScrollArea
+class Mixer : public QDockWidget
       {
       Q_OBJECT
       MasterScore* cs;

@@ -72,6 +72,7 @@ PartEdit::PartEdit(QWidget* parent)
 void PartEdit::expandToggled(bool val)
       {
       details->setVisible(val);
+      setMinimumHeight(val ? 176 : 80);
       }
 
 //---------------------------------------------------------
@@ -188,18 +189,21 @@ void PartEdit::playbackVoiceChanged()
 //---------------------------------------------------------
 
 Mixer::Mixer(QWidget* parent)
-   : QScrollArea(parent)
+      : QDockWidget("Mixer", parent)
       {
       setObjectName("Mixer");
-      setWidgetResizable(true);
       setWindowFlags(Qt::Tool);
       setWindowFlags(this->windowFlags() & ~Qt::WindowContextHelpButtonHint);
+      setAllowedAreas(Qt::DockWidgetAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea));
 
-      QWidget* area = new QWidget(this);
+      QScrollArea* area = new QScrollArea(this);
+      QWidget *w = new QWidget(area);
+      area->setWidget(w);
       vb = new QVBoxLayout;
       vb->setMargin(0);
       vb->setSpacing(0);
-      area->setLayout(vb);
+      w->setLayout(vb);
+      area->setWidgetResizable(true);
       setWidget(area);
 
       enablePlay = new EnablePlayForWidget(this);
@@ -239,7 +243,7 @@ void Mixer::closeEvent(QCloseEvent* ev)
 void Mixer::showEvent(QShowEvent* e)
       {
       enablePlay->showEvent(e);
-      QScrollArea::showEvent(e);
+      QDockWidget::showEvent(e);
       activateWindow();
       setFocus();
       }
@@ -252,7 +256,7 @@ bool Mixer::eventFilter(QObject* obj, QEvent* e)
       {
       if (enablePlay->eventFilter(obj, e))
             return true;
-      return QScrollArea::eventFilter(obj, e);
+      return QDockWidget::eventFilter(obj, e);
       }
 
 void Mixer::keyPressEvent(QKeyEvent* ev) {
@@ -269,7 +273,7 @@ void Mixer::keyPressEvent(QKeyEvent* ev) {
 
 void Mixer::changeEvent(QEvent *event)
       {
-      QScrollArea::changeEvent(event);
+      QDockWidget::changeEvent(event);
       if (event->type() == QEvent::LanguageChange)
             retranslate();
       }
@@ -393,7 +397,8 @@ void MuseScore::showMixer(bool val)
       QAction* a = getAction("toggle-mixer");
       if (mixer == 0) {
             mixer = new Mixer(this);
-            mscore->stackUnder(mixer);
+	    addDockWidget(Qt::RightDockWidgetArea, mixer);
+	    mixer->setFloating(false);
             if (synthControl)
                   connect(synthControl, SIGNAL(soundFontChanged()), mixer, SLOT(patchListChanged()));
             connect(synti, SIGNAL(soundFontChanged()), mixer, SLOT(patchListChanged()));
