@@ -28,6 +28,7 @@
 #include "libmscore/fifo.h"
 #include "libmscore/tempo.h"
 #include "tutor.h"
+#include "musescore.h"
 
 class QTimer;
 
@@ -159,8 +160,6 @@ class Seq : public QObject, public Sequencer {
       QTimer* heartBeatTimer;
       QTimer* noteTimer;
 
-      Tutor tutor;
-
       void collectMeasureEvents(Measure*, int staffIdx);
 
       void setPos(int);
@@ -171,6 +170,9 @@ class Seq : public QObject, public Sequencer {
       void unmarkNotes();
       void updateSynthesizerState(int tick1, int tick2);
       void addCountInClicks();
+
+      Tutor *tutor() {  return mscore->getPianoTutorPanel() ?
+			       &mscore->getPianoTutorPanel()->tutor() : 0;  }
       void tutorFutureEvents(EventMap::const_iterator it, EventMap::const_iterator it_end,
 			     unsigned framesPerPeriod);
 

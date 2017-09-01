@@ -88,17 +88,20 @@
            <item>
             <widget class="QLabel" name="label">
              <property name="text">
-              <string>First LED note (C-3 is 60)</string>
+              <string>C-4 LED number</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QLineEdit" name="firstNote">
+            <widget class="QLineEdit" name="midCLight">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
+             </property>
+             <property name="toolTip">
+              <string>Usually half your stripe size minus 1, e.g., for a 144 stripe, try 71</string>
              </property>
              <property name="baseSize">
               <size>

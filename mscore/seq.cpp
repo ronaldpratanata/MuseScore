@@ -522,9 +522,9 @@ void Seq::playEvent(const NPlayEvent& event, unsigned framePos)
                   }
             if (!mute) {
 		putEvent(event, framePos);
-		if (mscore->tutor()) {
+		if (mscore->tutorEnabled()) {
 		  //printf("Adding event: pitch=%d, velo=%d, ch=%d\n", event.pitch(), event.velo(), event.channel());
-		  tutor.addKey(event.pitch(), event.velo(), event.channel());
+		  tutor()->addKey(event.pitch(), event.velo(), event.channel());
 		  }
 	        }
             }
@@ -698,7 +698,7 @@ void Seq::tutorFutureEvents(EventMap::const_iterator it, EventMap::const_iterato
       }
       if (!mute && event.velo() > 0) {
 	//printf("Adding future event: pitch=%d, velo=%d, ch=%d\n", event.pitch(), event.velo(), event.channel());
-	tutor.addKey(event.pitch(), event.velo(), event.channel(), 1);
+	tutor()->addKey(event.pitch(), event.velo(), event.channel(), 1);
 	if (endFrame == -1)
 	  endFrame = playPosFrame + framesPerPeriod;
       }
@@ -727,8 +727,8 @@ void Seq::process(unsigned framesPerPeriod, float* buffer)
       if (driverState != state) {
             // Got a message from JACK Transport panel: Play
             if (state == Transport::STOP && driverState == Transport::PLAY) {
-                  if (mscore->tutor())
-		        tutor.clearKeys();
+                  if (mscore->tutorEnabled())
+		        tutor()->clearKeys();
                   if ((preferences.getBool(PREF_IO_JACK_USEJACKMIDI) || preferences.getBool(PREF_IO_JACK_USEJACKAUDIO)) && !getAction("play")->isChecked()) {
                         // Do not play while editing elements
                         if (mscore->state() != STATE_NORMAL || !isRunning() || !canStart())
@@ -767,8 +767,8 @@ void Seq::process(unsigned framesPerPeriod, float* buffer)
             // Got a message from JACK Transport panel: Stop
             else if (state == Transport::PLAY && driverState == Transport::STOP) {
                   state = Transport::STOP;
-		  if (mscore->tutor())
-		    tutor.clearKeys();
+		  if (mscore->tutorEnabled())
+		    tutor()->clearKeys();
                   // Muting all notes
                   stopNotes(-1, true);
                   initInstruments(true);
@@ -819,7 +819,7 @@ void Seq::process(unsigned framesPerPeriod, float* buffer)
             int periodEndFrame = *pPlayFrame + framesPerPeriod; // the ending frame (relative to start of playback) of the period being processed by this call to Seq::process
             int scoreEndUTick = cs->repeatList()->tick2utick(cs->lastMeasure()->endTick());
 	    //printf("size(): %d\n", tutor.size());
-	    if (mscore->tutor() && mscore->tutorWait() && tutor.size() > 0) {
+	    if (mscore->tutorEnabled() && mscore->tutorWait() && tutor()->size() > 0) {
 	      if (framesRemain && cs->playMode() == PlayMode::SYNTHESIZER) {
 		//metronome(framesRemain, p, inCountIn);
 		_synti->process(framesRemain, p);
@@ -958,10 +958,10 @@ void Seq::process(unsigned framesPerPeriod, float* buffer)
                   else
                         _driver->stopTransport();
 	          }
-	    if (mscore->tutor()) {
+	    if (mscore->tutorEnabled()) {
 	      if (mscore->tutorLookAhead())
 		tutorFutureEvents(*pPlayPos, pEvents->cend(), framesPerPeriod);
-	      tutor.flush();
+	      tutor()->flush();
               }
             }
       else {
@@ -1425,18 +1425,18 @@ void Seq::midiInputReady()
 
 void Seq::midiNoteReceived(int channel, int pitch, int velo) {
   qDebug("Got MIDI event: ch=%d, pitch=%d, vel=%d\n", channel, pitch, velo);
-  if (!mscore->tutor() || velo == 0)
+  if (!mscore->tutorEnabled() || velo == 0)
     return;
-  const tnote *pn = tutor.getKey(pitch);
+  const tnote *pn = tutor()->getKey(pitch);
   if (pn == 0)
     return;
   if (pn->future == 0) {
     //printf("Clearing event: pitch=%d\n", pitch);
-    tutor.clearKey(pitch);
-    tutor.flush();
-  } else if (pn->future == 1 && tutor.size() == 0) {
+    tutor()->clearKey(pitch);
+    tutor()->flush();
+  } else if (pn->future == 1 && tutor()->size() == 0) {
     //printf("Clearing event: pitch=%d\n", pitch);
-    tutor.clearKey(pitch);
+    tutor()->clearKey(pitch);
     // speed-up execution jumping to future event playPos
     for (auto it = playPos; it != events.end(); ++it) {
       const NPlayEvent& event = it->second;

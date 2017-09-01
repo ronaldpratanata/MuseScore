@@ -22,6 +22,7 @@
 #define __PIANOTUTORPANEL_H__
 
 #include "ui_pianotutorpanel.h"
+#include "tutor.h"
 
 namespace Ms {
 
@@ -33,12 +34,18 @@ class Score;
 
 class PianoTutorPanel : public QDockWidget, private Ui::PianoTutorPanelBase {
       Q_OBJECT
+
+      Tutor tutor_;
+
       virtual void closeEvent(QCloseEvent*);
       virtual void hideEvent (QHideEvent* event);
       virtual void showEvent(QShowEvent *);
       virtual void keyPressEvent(QKeyEvent*) override;
 
    private slots:
+     void onParamsChanged();
+     void onLeftHandColClicked();
+     void onRightHandColClicked();
 
    protected:
       virtual void changeEvent(QEvent *event);
@@ -52,6 +59,7 @@ class PianoTutorPanel : public QDockWidget, private Ui::PianoTutorPanelBase {
    public:
       PianoTutorPanel(QWidget* parent = 0);
       ~PianoTutorPanel();
+      Tutor & tutor() { return tutor_; }
       bool tutorEnabled() { return tutorEnabledCB->isChecked(); }
       bool tutorWait() { return tutorWaitCB->isChecked(); }
       bool tutorLookAhead() { return tutorLookAheadCB->isChecked(); }

@@ -37,14 +37,27 @@ class Tutor {
       std::mutex mtx;
       int num_curr_events;
 
+      int c4light;
+      double coeff;
+
+      int colors[2][3];
+
       bool checkSerial();
       void setTutorLight(int pitch, int velo, int channel, int future);
       void clearTutorLight(int pitch);
       void flushNoLock();
       void safe_write(char *data, int len);
+      int pitchToLight(int pitch);
 
  public:
       Tutor();
+      void setC4Light(int num) { c4light = num; }
+      int getC4Light() const { return c4light; }
+      void setCoeff(double c) { coeff = c; }
+      double getCoeff() const { return coeff; }
+      int* getColor(int idx) {  return colors[idx];  }
+      void setColor(int idx, int r, int g, int b);
+
       void addKey(int pitch, int velo, int channel, int future = 0);
       void clearKey(int pitch);
       // Return 0 if invalid

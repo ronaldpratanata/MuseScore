@@ -696,7 +696,7 @@ class MuseScore : public QMainWindow, public MuseScoreCore {
       void updatePlayMode();
       bool loop() const              { return loopAction->isChecked(); }
       bool metronome() const         { return metronomeAction->isChecked(); }
-      bool tutor() const             { return pianoTutorPanel != 0 && pianoTutorPanel->tutorEnabled(); }
+      bool tutorEnabled() const      { return pianoTutorPanel != 0 && pianoTutorPanel->tutorEnabled(); }
       bool tutorWait() const         { return pianoTutorPanel != 0 && pianoTutorPanel->tutorWait(); }
       bool tutorLookAhead() const    { return pianoTutorPanel != 0 && pianoTutorPanel->tutorLookAhead(); }
       bool countIn() const           { return countInAction->isChecked(); }

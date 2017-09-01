@@ -31,11 +31,17 @@ static const char *TUTOR_SERIAL_DEVICE2="/dev/ttyACM1";
 static char cmd[1024];
 static char *curr_cmd = cmd;
 
-Tutor::Tutor() : tutorSerial(-1), num_curr_events(0) {
+int def_colors[2][3] = {
+  { 50, 0, 50},
+  { 0, 50, 50}
+};
+
+Tutor::Tutor() : tutorSerial(-1), num_curr_events(0), c4light(71), coeff(-2.0) {
   // mark all notes as unused
   for (int i = 0; i < 256; i++) {
     notes[i].velo = -1;
   }
+  memcpy(colors, def_colors, sizeof(colors));
 }
 
 bool Tutor::checkSerial() {
@@ -97,14 +103,18 @@ void Tutor::flushNoLock() {
   }
 }
 
-int colors[][3] = {
-  { 50, 0, 50},
-  { 0, 50, 50}
-};
+int Tutor::pitchToLight(int pitch) {
+  int led = round((pitch - 24) * coeff + c4light);
+  if (led < 0)
+    led = 0;
+  else if (led > 255)
+    led = 255;
+  return led;
+}
 
 void Tutor::setTutorLight(int pitch, int velo, int channel, int future) {
-  if (pitch >= 24)
-    pitch -= 24;
+  if (pitch >= 36)
+    pitch -= 36;
   if (checkSerial()) {
     int r = colors[channel % 2][0];
     int g = colors[channel % 2][1];
@@ -115,18 +125,18 @@ void Tutor::setTutorLight(int pitch, int velo, int channel, int future) {
       b /= 10;
     }
     int cmdlen = snprintf(curr_cmd, sizeof(cmd) - 1 - (curr_cmd - cmd),
-			  "k%03dr%03dg%03db%03d ", pitch*2, r, g, b);
+			  "k%03dr%03dg%03db%03d ", pitchToLight(pitch), r, g, b);
     curr_cmd += cmdlen;
     //safe_write(cmd, cmdlen);
   }
 }
 
 void Tutor::clearTutorLight(int pitch) {
-  if (pitch >= 24)
-    pitch -= 24;
+  if (pitch >= 36)
+    pitch -= 36;
   if (checkSerial()) {
     int cmdlen = snprintf(curr_cmd, sizeof(cmd) - 1 - (curr_cmd - cmd),
-			  "k%03dr%03dg%03db%03d ", pitch*2, 0, 0, 0);
+			  "k%03dr%03dg%03db%03d ", pitchToLight(pitch), 0, 0, 0);
     curr_cmd += cmdlen;
     //safe_write(cmd, cmdlen);
   }
@@ -205,4 +215,10 @@ void Tutor::clearKeys() {
 void Tutor::flush() {
   std::lock_guard<std::mutex> lock(mtx);
   flushNoLock();
+}
+
+void Tutor::setColor(int idx, int r, int g, int b) {
+  colors[idx][0] = r;
+  colors[idx][1] = g;
+  colors[idx][2] = b;
 }

@@ -25,8 +25,24 @@
 #include "seq.h"
 #include "musescore.h"
 #include "libmscore/measure.h"
+#include <math.h>
+#include <sstream>
+#include <iomanip>
+#include <qcolordialog.h>
 
 namespace Ms {
+
+static char h[] = "0123456789ABCDEF";
+static std::string col2hex(int *col) {
+  char c[] = "000000";
+  c[0] = h[col[0] >> 4];
+  c[1] = h[col[0] & 0x0f];
+  c[2] = h[col[1] >> 4];
+  c[3] = h[col[1] & 0x0f];
+  c[4] = h[col[2] >> 4];
+  c[5] = h[col[2] & 0x0f];
+  return std::string(c);
+}
 
 //---------------------------------------------------------
 //   PianoTutorPanel
@@ -41,6 +57,16 @@ PianoTutorPanel::PianoTutorPanel(QWidget* parent)
       setAllowedAreas(Qt::DockWidgetAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea));
 
       MuseScore::restoreGeometry(this);
+      lightsPerMeter->setCurrentText(QString::fromStdString(std::to_string(72 * fabs(tutor_.getCoeff()))));
+      midCLight->setText(QString::fromStdString(std::to_string(tutor_.getC4Light())));
+      backwardLayout->setChecked(tutor_.getCoeff() < 0);
+      leftHandColor->setStyleSheet(QString::fromStdString(std::string("background-color:#") + col2hex(tutor_.getColor(1))));
+      rightHandColor->setStyleSheet(QString::fromStdString(std::string("background-color:#") + col2hex(tutor_.getColor(0))));
+      connect(lightsPerMeter, SIGNAL(editTextChanged(const QString &)), this, SLOT(onParamsChanged()));
+      connect(midCLight, SIGNAL(textChanged(const QString &)), this, SLOT(onParamsChanged()));
+      connect(backwardLayout, SIGNAL(stateChanged(int)), this, SLOT(onParamsChanged()));
+      connect(leftHandColor, SIGNAL(clicked()), this, SLOT(onLeftHandColClicked()));
+      connect(rightHandColor, SIGNAL(clicked()), this, SLOT(onRightHandColClicked()));
       }
 
 PianoTutorPanel::~PianoTutorPanel()
@@ -111,5 +137,33 @@ void PianoTutorPanel::changeEvent(QEvent *event)
             retranslate();
       }
 
+void PianoTutorPanel::onParamsChanged()
+      {
+	tutor_.setC4Light(midCLight->text().toInt());
+	tutor_.setCoeff(lightsPerMeter->currentText().toDouble() / 72.0
+			  * backwardLayout->isChecked() ? -1 : 1);
+      }
+
+void PianoTutorPanel::onLeftHandColClicked()
+{
+  int *c = tutor_.getColor(1);
+  QColor col_init(c[0], c[1], c[2]);
+  QColor col = QColorDialog::getColor(col_init, this);
+  if (col.isValid()) {
+    tutor_.setColor(1, col.red(), col.green(), col.blue());
+    leftHandColor->setStyleSheet(QString::fromStdString(std::string("background-color:#") + col2hex(tutor_.getColor(1))));
+  }
 }
 
+void PianoTutorPanel::onRightHandColClicked()
+{
+  int *c = tutor_.getColor(0);
+  QColor col_init(c[0], c[1], c[2]);
+  QColor col = QColorDialog::getColor(col_init, this);
+  if (col.isValid()) {
+    tutor_.setColor(0, col.red(), col.green(), col.blue());
+    rightHandColor->setStyleSheet(QString::fromStdString(std::string("background-color:#") + col2hex(tutor_.getColor(0))));
+  }
+}
+
+}
