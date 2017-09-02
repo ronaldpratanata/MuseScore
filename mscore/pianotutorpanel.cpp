@@ -55,18 +55,18 @@ PianoTutorPanel::PianoTutorPanel(QWidget* parent)
       setWindowFlags(Qt::Tool);
       setWindowFlags(this->windowFlags() & ~Qt::WindowContextHelpButtonHint);
       setAllowedAreas(Qt::DockWidgetAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea));
-
       MuseScore::restoreGeometry(this);
-      lightsPerMeter->setCurrentText(QString::fromStdString(std::to_string(72 * fabs(tutor_.getCoeff()))));
-      midCLight->setText(QString::fromStdString(std::to_string(tutor_.getC4Light())));
-      backwardLayout->setChecked(tutor_.getCoeff() < 0);
-      leftHandColor->setStyleSheet(QString::fromStdString(std::string("background-color:#") + col2hex(tutor_.getColor(1))));
-      rightHandColor->setStyleSheet(QString::fromStdString(std::string("background-color:#") + col2hex(tutor_.getColor(0))));
+
+      showConfig();
+
       connect(lightsPerMeter, SIGNAL(editTextChanged(const QString &)), this, SLOT(onParamsChanged()));
       connect(midCLight, SIGNAL(textChanged(const QString &)), this, SLOT(onParamsChanged()));
       connect(backwardLayout, SIGNAL(stateChanged(int)), this, SLOT(onParamsChanged()));
       connect(leftHandColor, SIGNAL(clicked()), this, SLOT(onLeftHandColClicked()));
       connect(rightHandColor, SIGNAL(clicked()), this, SLOT(onRightHandColClicked()));
+      connect(tutorWizard, SIGNAL(clicked()), this, SLOT(onWizardClicked()));
+
+      wizard_ = 0;
       }
 
 PianoTutorPanel::~PianoTutorPanel()
@@ -107,6 +107,23 @@ void PianoTutorPanel::hideEvent(QHideEvent* ev)
       QWidget::hideEvent(ev);
       }
 
+void PianoTutorPanel::showConfig() {
+  lightsPerMeter->blockSignals(true);
+  midCLight->blockSignals(true);
+  backwardLayout->blockSignals(true);
+
+  lightsPerMeter->setCurrentText(QString::number(72 * fabs(tutor_.getCoeff())));
+  midCLight->setText(QString::number(tutor_.getC4Light()));
+  backwardLayout->setChecked(tutor_.getCoeff() < 0);
+
+  lightsPerMeter->blockSignals(false);
+  midCLight->blockSignals(false);
+  backwardLayout->blockSignals(false);
+
+  leftHandColor->setStyleSheet(QString::fromStdString(std::string("background-color:#") + col2hex(tutor_.getColor(1))));
+  rightHandColor->setStyleSheet(QString::fromStdString(std::string("background-color:#") + col2hex(tutor_.getColor(0))));
+}
+
 //---------------------------------------------------------
 //   showEvent
 //---------------------------------------------------------
@@ -139,9 +156,9 @@ void PianoTutorPanel::changeEvent(QEvent *event)
 
 void PianoTutorPanel::onParamsChanged()
       {
+	double lpm = lightsPerMeter->currentText().toDouble();
 	tutor_.setC4Light(midCLight->text().toInt());
-	tutor_.setCoeff(lightsPerMeter->currentText().toDouble() / 72.0
-			  * backwardLayout->isChecked() ? -1 : 1);
+	tutor_.setCoeff(lpm / 72.0 * (backwardLayout->isChecked() ? -1 : 1));
       }
 
 void PianoTutorPanel::onLeftHandColClicked()
@@ -163,6 +180,27 @@ void PianoTutorPanel::onRightHandColClicked()
   if (col.isValid()) {
     tutor_.setColor(0, col.red(), col.green(), col.blue());
     rightHandColor->setStyleSheet(QString::fromStdString(std::string("background-color:#") + col2hex(tutor_.getColor(0))));
+  }
+}
+
+void PianoTutorPanel::onWizardClicked()
+{
+  wizard_ = new QMessageBox(this);
+  wizard_->setText("Please, press the key on your keyboard closest to the lighted LED");
+  wizard_->setStandardButtons(QMessageBox::Cancel);
+  wizard_->setWindowModality(Qt::ApplicationModal);
+  tutor_.addKey(60, 127, 0);
+  tutor_.flush();
+  wizard_->exec();
+}
+
+void PianoTutorPanel::midiNoteReceived(int ch, int pitch, int velo) {
+  if (wizard_) {
+    // pitch corresponds to midCLight
+    tutor_.setC4Pitch(pitch);
+    wizard_->close();
+    wizard_ = 0;
+    showConfig();
   }
 }
 

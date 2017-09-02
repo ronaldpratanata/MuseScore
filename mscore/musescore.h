@@ -407,8 +407,6 @@ class MuseScore : public QMainWindow, public MuseScoreCore {
       QAction* loopOutAction;
       QAction* panAction;
       QAction* tutorAction;
-      QAction* tutorWaitAction;
-      QAction* tutorLookAheadAction;
 
       QLabel* cornerLabel;
       QStringList _recentScores;

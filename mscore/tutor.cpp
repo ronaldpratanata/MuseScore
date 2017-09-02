@@ -32,8 +32,8 @@ static char cmd[1024];
 static char *curr_cmd = cmd;
 
 int def_colors[2][3] = {
-  { 50, 0, 50},
-  { 0, 50, 50}
+  { 16, 0, 16},
+  { 0, 16, 16}
 };
 
 Tutor::Tutor() : tutorSerial(-1), num_curr_events(0), c4light(71), coeff(-2.0) {
@@ -80,7 +80,6 @@ bool Tutor::checkSerial() {
 
 void Tutor::safe_write(char *data, int len) {
   data[len] = '\0';
-  //printf("Writing to serial: <%s>\n", data);
   while (len > 0) {
     tcdrain(tutorSerial);
     int written = write(tutorSerial, data, (len < 17 ? len : 17));
@@ -104,25 +103,29 @@ void Tutor::flushNoLock() {
 }
 
 int Tutor::pitchToLight(int pitch) {
-  int led = round((pitch - 24) * coeff + c4light);
+  int led = round((pitch - 60) * coeff + c4light);
   if (led < 0)
     led = 0;
   else if (led > 255)
     led = 255;
+  printf("pitch %d -> light %d\n", pitch, led);
   return led;
 }
 
+void Tutor::setC4Pitch(int pitch) {
+  clearKeys();
+  c4light -= round((pitch - 60) * coeff);
+}
+
 void Tutor::setTutorLight(int pitch, int velo, int channel, int future) {
-  if (pitch >= 36)
-    pitch -= 36;
   if (checkSerial()) {
     int r = colors[channel % 2][0];
     int g = colors[channel % 2][1];
     int b = colors[channel % 2][2];
     if (future > 0) {
-      r /= 10;
-      g /= 10;
-      b /= 10;
+      r /= 8;
+      g /= 8;
+      b /= 8;
     }
     int cmdlen = snprintf(curr_cmd, sizeof(cmd) - 1 - (curr_cmd - cmd),
 			  "k%03dr%03dg%03db%03d ", pitchToLight(pitch), r, g, b);
@@ -132,8 +135,6 @@ void Tutor::setTutorLight(int pitch, int velo, int channel, int future) {
 }
 
 void Tutor::clearTutorLight(int pitch) {
-  if (pitch >= 36)
-    pitch -= 36;
   if (checkSerial()) {
     int cmdlen = snprintf(curr_cmd, sizeof(cmd) - 1 - (curr_cmd - cmd),
 			  "k%03dr%03dg%03db%03d ", pitchToLight(pitch), 0, 0, 0);

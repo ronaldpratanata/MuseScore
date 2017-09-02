@@ -36,16 +36,19 @@ class PianoTutorPanel : public QDockWidget, private Ui::PianoTutorPanelBase {
       Q_OBJECT
 
       Tutor tutor_;
+      QMessageBox *wizard_;
 
       virtual void closeEvent(QCloseEvent*);
       virtual void hideEvent (QHideEvent* event);
       virtual void showEvent(QShowEvent *);
       virtual void keyPressEvent(QKeyEvent*) override;
+      void showConfig();
 
    private slots:
      void onParamsChanged();
      void onLeftHandColClicked();
      void onRightHandColClicked();
+     void onWizardClicked();
 
    protected:
       virtual void changeEvent(QEvent *event);
@@ -63,6 +66,7 @@ class PianoTutorPanel : public QDockWidget, private Ui::PianoTutorPanelBase {
       bool tutorEnabled() { return tutorEnabledCB->isChecked(); }
       bool tutorWait() { return tutorWaitCB->isChecked(); }
       bool tutorLookAhead() { return tutorLookAheadCB->isChecked(); }
+      void midiNoteReceived(int ch, int pitch, int velo);
       };
 
 } // namespace Ms

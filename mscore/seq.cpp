@@ -1425,6 +1425,9 @@ void Seq::midiInputReady()
 
 void Seq::midiNoteReceived(int channel, int pitch, int velo) {
   qDebug("Got MIDI event: ch=%d, pitch=%d, vel=%d\n", channel, pitch, velo);
+  PianoTutorPanel *ptp = mscore->getPianoTutorPanel();
+  if (ptp)
+    ptp->midiNoteReceived(channel, pitch, velo);
   if (!mscore->tutorEnabled() || velo == 0)
     return;
   const tnote *pn = tutor()->getKey(pitch);

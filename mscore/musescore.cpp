@@ -667,9 +667,7 @@ MuseScore::MuseScore()
       metronomeAction = getAction("metronome");
       countInAction   = getAction("countin");
       panAction       = getAction("pan");
-      tutorAction     = getAction("tutor");
-      tutorWaitAction = getAction("tutor-wait");
-      tutorLookAheadAction = getAction("tutor-look-ahead");
+      tutorAction     = getAction("toggle-pianotutor");
 
       _statusBar = new QStatusBar;
       _statusBar->addPermanentWidget(new QWidget(this), 2);
@@ -850,8 +848,6 @@ MuseScore::MuseScore()
       transportTools->addWidget(new AccessibleToolButton(transportTools, getAction("pan")));
       transportTools->addWidget(new AccessibleToolButton(transportTools, metronomeAction));
       transportTools->addWidget(new AccessibleToolButton(transportTools, tutorAction));
-      transportTools->addWidget(new AccessibleToolButton(transportTools, tutorWaitAction));
-      transportTools->addWidget(new AccessibleToolButton(transportTools, tutorLookAheadAction));
 
       //-------------------------------
       //    Concert Pitch Tool Bar
@@ -2186,14 +2182,6 @@ void MuseScore::showPianoTutorPanel(bool visible)
             if (!visible)
                   return;
             pianoTutorPanel = new PianoTutorPanel(this);
-            // connect(playPanel, SIGNAL(gainChange(float)),     synti, SLOT(setGain(float)));
-            // connect(playPanel, SIGNAL(metronomeGainChanged(float)), seq, SLOT(setMetronomeGain(float)));
-            // connect(playPanel, SIGNAL(relTempoChanged(double)),seq, SLOT(setRelTempo(double)));
-            // connect(playPanel, SIGNAL(posChange(int)),         seq, SLOT(seek(int)));
-            // connect(playPanel, SIGNAL(closed(bool)),          playId,   SLOT(setChecked(bool)));
-            // connect(synti,     SIGNAL(gainChanged(float)), playPanel, SLOT(setGain(float)));
-            // playPanel->setGain(synti->gain());
-            // playPanel->setScore(cs);
             addDockWidget(Qt::RightDockWidgetArea, pianoTutorPanel);
 	    pianoTutorPanel->setFloating(false);
             }
