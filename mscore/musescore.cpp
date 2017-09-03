@@ -3461,6 +3461,7 @@ void MuseScore::writeSettings()
       if (mixer)
             mixer->writeSettings();
       settings.setValue("mixerVisible", mixer && mixer->isVisible());
+      settings.setValue("playPanelVisible", playPanel && playPanel->isVisible());
       if (seq) {
             seq->stopWait();
             seq->exit();
@@ -6409,6 +6410,8 @@ int main(int argc, char* av[])
             mscore->showSynthControl(true);
       if (settings.value("mixerVisible", false).toBool())
             mscore->showMixer(true);
+      if (settings.value("playPanelVisible", false).toBool())
+            mscore->showPlayPanel(true);
 
       return qApp->exec();
       }
