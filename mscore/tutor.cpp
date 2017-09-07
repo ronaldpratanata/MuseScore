@@ -108,7 +108,7 @@ int Tutor::pitchToLight(int pitch) {
     led = 0;
   else if (led > 255)
     led = 255;
-  printf("pitch %d -> light %d\n", pitch, led);
+  //printf("pitch %d -> light %d\n", pitch, led);
   return led;
 }
 
@@ -144,7 +144,8 @@ void Tutor::clearTutorLight(int pitch) {
 }
 
 void Tutor::addKey(int pitch, int velo, int channel, int future) {
-  struct timespec prev = {0, 0};
+  //printf("addKey(): p=%d, v=%d, c=%d, f=%d\n", pitch, velo, channel, future);
+  struct timespec prev = (struct timespec) {0, 0};
   if (velo == 0) {
     clearKey(pitch);
     return;
@@ -177,6 +178,7 @@ void Tutor::addKey(int pitch, int velo, int channel, int future) {
     unsigned long diff_us =
       (now.tv_sec - prev.tv_sec) * 1000000 + (now.tv_nsec - prev.tv_nsec) / 1000;
     if (diff_us < 100000) {
+      //printf("diff_us: %lu, now: %ld,%ld, prev: %ld,%ld\n", diff_us, now.tv_sec,now.tv_nsec, prev.tv_sec,prev.tv_nsec);
       clearTutorLight(pitch);
       --num_curr_events;
       n.velo = -1;
@@ -185,7 +187,8 @@ void Tutor::addKey(int pitch, int velo, int channel, int future) {
   }
 }
 
-void Tutor::clearKey(int pitch) {
+void Tutor::clearKey(int pitch, bool mark) {
+  //printf("clearKey(): p=%d\n", pitch);
   pitch &= 255;
   std::lock_guard<std::mutex> lock(mtx);
   tnote & n = notes[pitch];
@@ -194,9 +197,9 @@ void Tutor::clearKey(int pitch) {
       clearTutorLight(pitch);
       --num_curr_events;
       n.velo = -1;
-    } else {
+    } else if (mark) {
       clock_gettime(CLOCK_MONOTONIC, &n.ts);
-      //printf("Marking time for pitch %d\n", pitch);
+      //printf("Marking time for pitch %d: %d,%d\n", pitch, n.ts.tv_sec,n.ts.tv_nsec);
     }
   }
 }

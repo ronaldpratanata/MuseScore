@@ -1438,8 +1438,8 @@ void Seq::midiNoteReceived(int channel, int pitch, int velo) {
     tutor()->clearKey(pitch);
     tutor()->flush();
   } else if (pn->future == 1 && tutor()->size() == 0) {
-    //printf("Clearing event: pitch=%d\n", pitch);
-    tutor()->clearKey(pitch);
+    //printf("Clearing event & skipping: pitch=%d\n", pitch);
+    tutor()->clearKey(pitch, true);
     // speed-up execution jumping to future event playPos
     for (auto it = playPos; it != events.end(); ++it) {
       const NPlayEvent& event = it->second;

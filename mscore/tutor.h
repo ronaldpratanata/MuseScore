@@ -60,7 +60,7 @@ class Tutor {
       void setColor(int idx, int r, int g, int b);
 
       void addKey(int pitch, int velo, int channel, int future = 0);
-      void clearKey(int pitch);
+      void clearKey(int pitch, bool mark = false);
       // Return 0 if invalid
       const tnote *getKey(int pitch) { return notes[pitch].velo != -1 ? &notes[pitch] : NULL; }
       void clearKeys();
