@@ -46,8 +46,12 @@ class Tutor {
       void setTutorLight(int pitch, int velo, int channel, int future);
       void clearTutorLight(int pitch);
       void flushNoLock();
-      void safe_write(char *data, int len);
+      void safe_write(char *data, int len, bool flush_op);
       int pitchToLight(int pitch);
+      void clearKeyNoLock(int pitch, bool mark = false);
+
+      bool needs_flush;
+      struct timespec last_flushed_ts;
 
  public:
       Tutor();
@@ -61,11 +65,10 @@ class Tutor {
 
       void addKey(int pitch, int velo, int channel, int future = 0);
       void clearKey(int pitch, bool mark = false);
-      // Return 0 if invalid
-      const tnote *getKey(int pitch) { return notes[pitch].velo != -1 ? &notes[pitch] : NULL; }
       void clearKeys();
-      size_t size() { return num_curr_events; }
+      size_t size();
       void flush();
+      int keyPressed(int pitch, int velo);
 };
 
 #endif

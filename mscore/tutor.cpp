@@ -24,33 +24,34 @@
 #include <stdio.h>
 #include <termios.h>
 #include <time.h>
+#include <assert.h>
 
 static const char *TUTOR_SERIAL_DEVICE="/dev/ttyACM0";
 static const char *TUTOR_SERIAL_DEVICE2="/dev/ttyACM1";
-
-static char cmd[1024];
-static char *curr_cmd = cmd;
 
 int def_colors[2][3] = {
   { 16, 0, 16},
   { 0, 16, 16}
 };
 
-Tutor::Tutor() : tutorSerial(-1), num_curr_events(0), c4light(71), coeff(-2.0) {
+Tutor::Tutor() : tutorSerial(-1), num_curr_events(0),
+		 c4light(71), coeff(-2.0),
+		 needs_flush(false) {
   // mark all notes as unused
   for (int i = 0; i < 256; i++) {
     notes[i].velo = -1;
   }
   memcpy(colors, def_colors, sizeof(colors));
+  last_flushed_ts = (struct timespec) { 0, 0 };
 }
 
 bool Tutor::checkSerial() {
   if (tutorSerial > 0)
     return true;
   if (tutorSerial < 0) {
-    tutorSerial = open(TUTOR_SERIAL_DEVICE, O_WRONLY | O_NOCTTY);
+    tutorSerial = open(TUTOR_SERIAL_DEVICE, O_RDWR | O_NOCTTY);
     if (tutorSerial < 0) {
-      tutorSerial = open(TUTOR_SERIAL_DEVICE2, O_WRONLY | O_NOCTTY);
+      tutorSerial = open(TUTOR_SERIAL_DEVICE2, O_RDWR | O_NOCTTY);
     }
     if (tutorSerial > 0) {
       termios tio;
@@ -72,17 +73,47 @@ bool Tutor::checkSerial() {
 	perror("tcsetattr() failed: ");
 	return false;
       }
+      // // Waiting for "PianoTutor v1.0 is ready!" string
+      // int to_read = 25;
+      // while (to_read > 0) {
+      // 	char ch;
+      // 	int len = read(tutorSerial, &ch, 1);
+      // 	if (len < 0) {
+      // 	  perror("read() failed: ");
+      // 	  return false;
+      // 	}
+      // 	to_read -= len;
+      // }
+      // //usleep(10000);
       return true;
     }
   }
   return false;
 }
 
-void Tutor::safe_write(char *data, int len) {
+void Tutor::safe_write(char *data, int len, bool flush_op) {
+  assert(!mtx.try_lock());
+
+  // flush operation(s) update LEDs on the stripe, which is blocking
+  // Arduino for a while -- without it pulling bytes out of its
+  // hardware 1-byte buffer (!) -- let's wait for at least 2ms after a
+  // flush before any further write()
+  // note: spin-waiting with lock held in RT thread (!)
+  struct timespec now;
+  struct timespec &old = last_flushed_ts;
+  do {
+    clock_gettime(CLOCK_REALTIME, &now);
+  } while ((old.tv_sec != 0 || old.tv_nsec != 0) &&
+	   ((now.tv_sec - old.tv_sec) * 1000000 + (now.tv_nsec - old.tv_nsec) / 1000 < 10000));
+  if (flush_op)
+    last_flushed_ts = now;
+
+  // useful to debug/printf() what's about to be written (beware of buffer overruns)
   data[len] = '\0';
   while (len > 0) {
     tcdrain(tutorSerial);
-    int written = write(tutorSerial, data, (len < 17 ? len : 17));
+    int written = write(tutorSerial, data, len);
+    printf("Written %d bytes (len=%d): %s\n", written, len, data);
     if (written < 0) {
       perror("write() failed!");
       close(tutorSerial);
@@ -91,14 +122,18 @@ void Tutor::safe_write(char *data, int len) {
     }
     data += written;
     len -= written;
-    usleep(10000);
   }
 }
 
 void Tutor::flushNoLock() {
-  if (curr_cmd > cmd && checkSerial()) {
-    safe_write(cmd, curr_cmd - cmd);
-    curr_cmd = cmd;
+  assert(!mtx.try_lock());
+  if (checkSerial() && needs_flush) {
+    char cmd[4];
+    cmd[0]='F';
+    cmd[1]='\n';
+    printf("flushNoLock(): calling safe_write()\n");
+    safe_write(cmd, 2, true);
+    needs_flush = false;
   }
 }
 
@@ -118,6 +153,7 @@ void Tutor::setC4Pitch(int pitch) {
 }
 
 void Tutor::setTutorLight(int pitch, int velo, int channel, int future) {
+  assert(!mtx.try_lock());
   if (checkSerial()) {
     int r = colors[channel % 2][0];
     int g = colors[channel % 2][1];
@@ -127,42 +163,45 @@ void Tutor::setTutorLight(int pitch, int velo, int channel, int future) {
       g /= 8;
       b /= 8;
     }
-    int cmdlen = snprintf(curr_cmd, sizeof(cmd) - 1 - (curr_cmd - cmd),
-			  "k%03dr%03dg%03db%03d ", pitchToLight(pitch), r, g, b);
-    curr_cmd += cmdlen;
-    //safe_write(cmd, cmdlen);
+    char cmd[16];
+    int cmdlen = snprintf(cmd, sizeof(cmd) - 1,
+			  "H%02x%02x%02x%02x\n", pitchToLight(pitch), r, g, b);
+    safe_write(cmd, cmdlen, false);
+    needs_flush = true;
   }
 }
 
 void Tutor::clearTutorLight(int pitch) {
+  assert(!mtx.try_lock());
   if (checkSerial()) {
-    int cmdlen = snprintf(curr_cmd, sizeof(cmd) - 1 - (curr_cmd - cmd),
-			  "k%03dr%03dg%03db%03d ", pitchToLight(pitch), 0, 0, 0);
-    curr_cmd += cmdlen;
-    //safe_write(cmd, cmdlen);
+    char cmd[16];
+    int cmdlen = snprintf(cmd, sizeof(cmd) - 1,
+			  "H%02x%02x%02x%02x\n", pitchToLight(pitch), 0, 0, 0);
+    safe_write(cmd, cmdlen, false);
+    needs_flush = true;
   }
 }
 
 void Tutor::addKey(int pitch, int velo, int channel, int future) {
-  //printf("addKey(): p=%d, v=%d, c=%d, f=%d\n", pitch, velo, channel, future);
   struct timespec prev = (struct timespec) {0, 0};
   if (velo == 0) {
     clearKey(pitch);
     return;
   }
   pitch &= 255;
-  std::lock_guard<std::mutex> lock(mtx);
   tnote & n = notes[pitch];
+  std::lock_guard<std::mutex> lock(mtx);
   if (velo == n.velo && channel == n.channel && future == n.future)
     return;
+  printf("addKey(): p=%d, v=%d, c=%d, f=%d\n", pitch, velo, channel, future);
   if (n.velo != -1) {
     if (future == 0 && n.future > 0) {
       ++num_curr_events;
       if (n.ts.tv_sec != 0 || n.ts.tv_nsec != 0)
 	prev = n.ts;
-    }
-    if (future > n.future || (future == n.future && velo < n.velo))
+    } else if (future > n.future || (future == n.future && velo < n.velo)) {
       return;
+    }
   } else {
     if (future == 0)
       ++num_curr_events;
@@ -187,10 +226,10 @@ void Tutor::addKey(int pitch, int velo, int channel, int future) {
   }
 }
 
-void Tutor::clearKey(int pitch, bool mark) {
-  //printf("clearKey(): p=%d\n", pitch);
+void Tutor::clearKeyNoLock(int pitch, bool mark) {
+  printf("clearKey(): p=%d\n", pitch);
+  assert(!mtx.try_lock());
   pitch &= 255;
-  std::lock_guard<std::mutex> lock(mtx);
   tnote & n = notes[pitch];
   if (n.velo != -1) {
     if (n.future == 0) {
@@ -204,25 +243,70 @@ void Tutor::clearKey(int pitch, bool mark) {
   }
 }
 
-void Tutor::clearKeys() {
+void Tutor::clearKey(int pitch, bool mark) {
   std::lock_guard<std::mutex> lock(mtx);
-  for (int i = 0; i < (int) (sizeof(notes) / sizeof(notes[0])); ++i) {
-    if (notes[i].velo != -1) {
-      notes[i].velo = -1;
-      clearTutorLight(i);
+  clearKeyNoLock(pitch, mark);
+}
+
+void Tutor::clearKeys() {
+  do {
+    std::lock_guard<std::mutex> lock(mtx);
+    if (checkSerial()) {
+      char cmd[4];
+      cmd[0]='c'; // 'c' also flushes
+      cmd[1]='\n';
+      safe_write(cmd, 2, true);
+      needs_flush = false;
     }
-  }
-  flushNoLock();
-  num_curr_events = 0;
+    for (int i = 0; i < (int) (sizeof(notes) / sizeof(notes[0])); ++i)
+      notes[i].velo = -1;
+    num_curr_events = 0;
+  } while (false);
+  //usleep(10000);
 }
 
 void Tutor::flush() {
-  std::lock_guard<std::mutex> lock(mtx);
-  flushNoLock();
+  do {
+    std::lock_guard<std::mutex> lock(mtx);
+    flushNoLock();
+  } while (false);
 }
 
 void Tutor::setColor(int idx, int r, int g, int b) {
   colors[idx][0] = r;
   colors[idx][1] = g;
   colors[idx][2] = b;
+}
+
+int Tutor::keyPressed(int pitch, int velo) {
+  pitch &= 255;
+  tnote & n = notes[pitch];
+  int rv = -1;
+  do {
+    std::lock_guard<std::mutex> lock(mtx);
+    if (n.velo == -1) {
+      rv = -1;
+      break;
+    }
+    if (n.future == 0) {
+      printf("Clearing event: pitch=%d\n", pitch);
+      clearKeyNoLock(pitch);
+      flushNoLock();
+      rv = 0;
+      break;
+    } else if (n.future > 0 && num_curr_events == 0) {
+      rv = n.future;
+      printf("Clearing future event & skipping: pitch=%d\n", pitch);
+      clearKeyNoLock(pitch, true);
+      flushNoLock();
+      break;
+    }
+  } while (false);
+  //usleep(10000);
+  return rv;
+}
+
+size_t Tutor::size() {
+  std::lock_guard<std::mutex> lock(mtx);
+  return num_curr_events;
 }

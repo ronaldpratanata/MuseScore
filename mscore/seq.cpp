@@ -523,7 +523,7 @@ void Seq::playEvent(const NPlayEvent& event, unsigned framePos)
             if (!mute) {
 		putEvent(event, framePos);
 		if (mscore->tutorEnabled()) {
-		  //printf("Adding event: pitch=%d, velo=%d, ch=%d\n", event.pitch(), event.velo(), event.channel());
+		  printf("Adding event: pitch=%d, velo=%d, ch=%d\n", event.pitch(), event.velo(), event.channel());
 		  tutor()->addKey(event.pitch(), event.velo(), event.channel());
 		  }
 	        }
@@ -669,13 +669,13 @@ void Seq::tutorFutureEvents(EventMap::const_iterator it, EventMap::const_iterato
 {
   int i = 32;	// max number of events we're going through for look-ahead key presses
   int endFrame = -1;
-  //struct timespec ts_beg, ts_end;
-  //clock_gettime(CLOCK_REALTIME, &ts_beg);
+  struct timespec ts_beg, ts_end;
+  clock_gettime(CLOCK_REALTIME, &ts_beg);
   while (it != it_end && i-- > 0) {
     int playPosUTick = it->first;
     if (mscore->loop()) {
       int loopOutUTick = cs->repeatList()->tick2utick(cs->loopOutTick());
-      //printf("playUTick: %d, loopOut: %d\n", playPosUTick, loopOutUTick);
+      printf("playUTick: %d, loopOut: %d\n", playPosUTick, loopOutUTick);
       if (playPosUTick >= loopOutUTick)
 	break;
     }
@@ -705,7 +705,7 @@ void Seq::tutorFutureEvents(EventMap::const_iterator it, EventMap::const_iterato
     }
     ++it;
   }
-  //clock_gettime(CLOCK_REALTIME, &ts_end);
+  clock_gettime(CLOCK_REALTIME, &ts_end);
   //printf("elapsed: %ld us\n", (ts_end.tv_sec - ts_beg.tv_sec) * 1000000 + (ts_end.tv_nsec - ts_beg.tv_nsec) / 1000);
 }
 
@@ -818,11 +818,12 @@ void Seq::process(unsigned framesPerPeriod, float* buffer)
             unsigned framePos = 0; // frame currently being processed relative to the first frame of this call to Seq::process
             int periodEndFrame = *pPlayFrame + framesPerPeriod; // the ending frame (relative to start of playback) of the period being processed by this call to Seq::process
             int scoreEndUTick = cs->repeatList()->tick2utick(cs->lastMeasure()->endTick());
-	    //printf("size(): %d\n", tutor.size());
+	    //printf("size(): %d\n", tutor()->size());
 	    if (mscore->tutorEnabled() && mscore->tutorWait() && tutor()->size() > 0) {
 	      if (framesRemain && cs->playMode() == PlayMode::SYNTHESIZER) {
 		//metronome(framesRemain, p, inCountIn);
 		_synti->process(framesRemain, p);
+		tutor()->flush();
 		return;
 	      }
 	    }
@@ -871,6 +872,8 @@ void Seq::process(unsigned framesPerPeriod, float* buffer)
                                           else {
                                                 emit toGui('3');
                                                 }
+					  if (mscore->tutorEnabled())
+					        tutor()->flush();
                                           // Exit this function to avoid segmentation fault in Scoreview
                                           return;
                                           }
@@ -1424,32 +1427,26 @@ void Seq::midiInputReady()
       }
 
 void Seq::midiNoteReceived(int channel, int pitch, int velo) {
-  qDebug("Got MIDI event: ch=%d, pitch=%d, vel=%d\n", channel, pitch, velo);
+  printf("Got MIDI event: ch=%d, pitch=%d, vel=%d\n", channel, pitch, velo);
   PianoTutorPanel *ptp = mscore->getPianoTutorPanel();
   if (ptp)
     ptp->midiNoteReceived(channel, pitch, velo);
   if (!mscore->tutorEnabled() || velo == 0)
     return;
-  const tnote *pn = tutor()->getKey(pitch);
-  if (pn == 0)
-    return;
-  if (pn->future == 0) {
-    //printf("Clearing event: pitch=%d\n", pitch);
-    tutor()->clearKey(pitch);
-    tutor()->flush();
-  } else if (pn->future == 1 && tutor()->size() == 0) {
-    //printf("Clearing event & skipping: pitch=%d\n", pitch);
-    tutor()->clearKey(pitch, true);
+  int future = tutor()->keyPressed(pitch, velo);
+  if (future > 0) {
     // speed-up execution jumping to future event playPos
+    printf("Speeding up...\n");
     for (auto it = playPos; it != events.end(); ++it) {
       const NPlayEvent& event = it->second;
       if (event.type() == ME_NOTEON && event.pitch() == pitch && event.velo() > 0) {
-	if (it->first > playPos->first)
+	if (it->first > playPos->first) {
+	  printf("Seeking to %d\n", it->first);
 	  seek(it->first);
+	}
 	break;
       }
     }
-
   }
 }
 
