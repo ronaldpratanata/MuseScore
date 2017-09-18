@@ -2182,7 +2182,7 @@ void MuseScore::showPianoTutorPanel(bool visible)
             if (!visible)
                   return;
             pianoTutorPanel = new PianoTutorPanel(this);
-            addDockWidget(Qt::RightDockWidgetArea, pianoTutorPanel);
+            addDockWidget(Qt::LeftDockWidgetArea, pianoTutorPanel);
 	    pianoTutorPanel->setFloating(false);
             }
       pianoTutorPanel->setVisible(visible);
