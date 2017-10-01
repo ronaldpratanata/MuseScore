@@ -112,7 +112,7 @@ void PianoTutorPanel::showConfig() {
   midCLight->blockSignals(true);
   backwardLayout->blockSignals(true);
 
-  lightsPerMeter->setCurrentText(QString::number(72 * fabs(tutor_.getCoeff())));
+  lightsPerMeter->setCurrentText(QString::number(fabs(tutor_.getCoeff())));
   midCLight->setText(QString::number(tutor_.getC4Light()));
   backwardLayout->setChecked(tutor_.getCoeff() < 0);
 
@@ -158,7 +158,7 @@ void PianoTutorPanel::onParamsChanged()
       {
 	double lpm = lightsPerMeter->currentText().toDouble();
 	tutor_.setC4Light(midCLight->text().toInt());
-	tutor_.setCoeff(lpm / 72.0 * (backwardLayout->isChecked() ? -1 : 1));
+	tutor_.setCoeff(lpm * (backwardLayout->isChecked() ? -1 : 1));
       }
 
 void PianoTutorPanel::onLeftHandColClicked()

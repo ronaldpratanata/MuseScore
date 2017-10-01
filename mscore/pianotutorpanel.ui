@@ -55,7 +55,7 @@
            <item>
             <widget class="QLabel" name="label_4">
              <property name="text">
-              <string>LEDs per meter</string>
+              <string>LEDs per key</string>
              </property>
             </widget>
            </item>
@@ -66,17 +66,12 @@
              </property>
              <item>
               <property name="text">
-               <string>144</string>
+               <string>2.0</string>
               </property>
              </item>
              <item>
               <property name="text">
-               <string>72</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>60</string>
+               <string>1.0</string>
               </property>
              </item>
             </widget>
