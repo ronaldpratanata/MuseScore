@@ -138,7 +138,15 @@ void Tutor::flushNoLock() {
 }
 
 int Tutor::pitchToLight(int pitch) {
-  int led = round((pitch - 60) * coeff + c4light);
+  int reflight, diffpitch;
+  if (coeff < 0 && pitch >= 60) {
+    reflight = c4light;
+    diffpitch = pitch - 60;
+  } else {
+    reflight = c4light + 1;
+    diffpitch = pitch - 59;
+  }
+  int led = round(diffpitch * coeff + reflight);
   if (led < 0)
     led = 0;
   else if (led > 255)
