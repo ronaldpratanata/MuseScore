@@ -2252,6 +2252,9 @@ bool MuseScore::processMidiRemote(MidiRemoteType type, int data, int value)
                               if (!a->isChecked())
                                     return true;
                               break;
+                        case RMIDI_TOGGLE_LOOP: a = getAction("loop");  break;
+		        case RMIDI_LOOP_IN:     a = getAction("loop-in");  break;
+                        case RMIDI_LOOP_OUT:    a = getAction("loop-out"); break;
                         case RMIDI_NOTE1:   a = getAction("pad-note-1");  break;
                         case RMIDI_NOTE2:   a = getAction("pad-note-2");  break;
                         case RMIDI_NOTE4:   a = getAction("pad-note-4");  break;

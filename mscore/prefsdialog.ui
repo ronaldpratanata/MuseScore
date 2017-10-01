@@ -2316,7 +2316,163 @@
             </property>
            </widget>
           </item>
-         </layout>
+          <item row="5" column="0">
+           <widget class="QLabel" name="labelToggleLoop">
+            <property name="text">
+             <string>Loop</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="1">
+           <widget class="Ms::GreendotButton" name="toggleLoopActive">
+            <property name="focusPolicy">
+             <enum>Qt::StrongFocus</enum>
+            </property>
+            <property name="toolTip">
+             <string>Is active</string>
+            </property>
+            <property name="accessibleName">
+             <string>Toggle loop is active</string>
+            </property>
+            <property name="text">
+             <string notr="true"/>
+            </property>
+            <property name="icon">
+             <iconset resource="musescore.qrc">
+              <normaloff>:/data/darkgreendot.svg</normaloff>
+              <normalon>:/data/greendot.svg</normalon>:/data/darkgreendot.svg</iconset>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="2">
+           <widget class="Ms::RecordButton" name="recordToggleLoop">
+            <property name="focusPolicy">
+             <enum>Qt::StrongFocus</enum>
+            </property>
+            <property name="toolTip">
+             <string>Record</string>
+            </property>
+            <property name="accessibleName">
+             <string>Loop toggle record</string>
+            </property>
+            <property name="text">
+             <string notr="true"/>
+            </property>
+            <property name="icon">
+             <iconset resource="musescore.qrc">
+              <normaloff>:/data/recordOff.svg</normaloff>
+              <normalon>:/data/recordOn.svg</normalon>:/data/recordOff.svg</iconset>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="4">
+           <widget class="QLabel" name="labelLoopIn">
+            <property name="text">
+             <string>Loop In</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="5">
+           <widget class="Ms::GreendotButton" name="loopInActive">
+            <property name="focusPolicy">
+             <enum>Qt::StrongFocus</enum>
+            </property>
+            <property name="toolTip">
+             <string>Is active</string>
+            </property>
+            <property name="accessibleName">
+             <string>Set loop-in is active</string>
+            </property>
+            <property name="text">
+             <string notr="true"/>
+            </property>
+            <property name="icon">
+             <iconset resource="musescore.qrc">
+              <normaloff>:/data/darkgreendot.svg</normaloff>
+              <normalon>:/data/greendot.svg</normalon>:/data/darkgreendot.svg</iconset>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="6">
+           <widget class="Ms::RecordButton" name="recordLoopIn">
+            <property name="focusPolicy">
+             <enum>Qt::StrongFocus</enum>
+            </property>
+            <property name="toolTip">
+             <string>Record</string>
+            </property>
+            <property name="accessibleName">
+             <string>Loop-in record</string>
+            </property>
+            <property name="text">
+             <string notr="true"/>
+            </property>
+            <property name="icon">
+             <iconset resource="musescore.qrc">
+              <normaloff>:/data/recordOff.svg</normaloff>
+              <normalon>:/data/recordOn.svg</normalon>:/data/recordOff.svg</iconset>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="8">
+           <widget class="QLabel" name="labelLoopOut">
+            <property name="text">
+             <string>Loop Out</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="9">
+           <widget class="Ms::GreendotButton" name="loopOutActive">
+            <property name="focusPolicy">
+             <enum>Qt::StrongFocus</enum>
+            </property>
+            <property name="toolTip">
+             <string>Is active</string>
+            </property>
+            <property name="accessibleName">
+             <string>Set loop-out is active</string>
+            </property>
+            <property name="text">
+             <string notr="true"/>
+            </property>
+            <property name="icon">
+             <iconset resource="musescore.qrc">
+              <normaloff>:/data/darkgreendot.svg</normaloff>
+              <normalon>:/data/greendot.svg</normalon>:/data/darkgreendot.svg</iconset>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="10">
+           <widget class="Ms::RecordButton" name="recordLoopOut">
+            <property name="focusPolicy">
+             <enum>Qt::StrongFocus</enum>
+            </property>
+            <property name="toolTip">
+             <string>Record</string>
+            </property>
+            <property name="accessibleName">
+             <string>Loop-out record</string>
+            </property>
+            <property name="text">
+             <string notr="true"/>
+            </property>
+            <property name="icon">
+             <iconset resource="musescore.qrc">
+              <normaloff>:/data/recordOff.svg</normaloff>
+              <normalon>:/data/recordOn.svg</normalon>:/data/recordOff.svg</iconset>
+            </property>
+           </widget>
+          </item>
+        </layout>
         </widget>
        </item>
        <item>

@@ -60,6 +60,9 @@ enum {
       RMIDI_UNDO,
       RMIDI_NOTE_EDIT_MODE,
       RMIDI_REALTIME_ADVANCE,
+      RMIDI_TOGGLE_LOOP,
+      RMIDI_LOOP_IN,
+      RMIDI_LOOP_OUT,
       MIDI_REMOTES
       };
 

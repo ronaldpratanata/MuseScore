@@ -193,6 +193,9 @@ PreferenceDialog::PreferenceDialog(QWidget* parent)
       recordButtons->addButton(recordUndo,   RMIDI_UNDO);
       recordButtons->addButton(recordEditMode, RMIDI_NOTE_EDIT_MODE);
       recordButtons->addButton(recordRealtimeAdvance, RMIDI_REALTIME_ADVANCE);
+      recordButtons->addButton(recordToggleLoop,   RMIDI_TOGGLE_LOOP);
+      recordButtons->addButton(recordLoopIn,   RMIDI_LOOP_IN);
+      recordButtons->addButton(recordLoopOut,   RMIDI_LOOP_OUT);
 
       connect(recordButtons,          SIGNAL(buttonClicked(int)), SLOT(recordButtonClicked(int)));
       connect(midiRemoteControlClear, SIGNAL(clicked()), SLOT(midiRemoteControlClearClicked()));
@@ -275,6 +278,9 @@ void PreferenceDialog::updateRemote()
       recordUndoActive->setChecked(preferences.midiRemote(RMIDI_UNDO).type != -1);
       editModeActive->setChecked(preferences.midiRemote(RMIDI_NOTE_EDIT_MODE).type != -1);
       realtimeAdvanceActive->setChecked(preferences.midiRemote(RMIDI_REALTIME_ADVANCE).type != -1);
+      toggleLoopActive->setChecked(preferences.midiRemote(RMIDI_TOGGLE_LOOP).type   != -1);
+      loopInActive->setChecked(preferences.midiRemote(RMIDI_LOOP_IN).type   != -1);
+      loopOutActive->setChecked(preferences.midiRemote(RMIDI_LOOP_OUT).type   != -1);
 
       int id = mscore->midiRecordId();
       recordRewind->setChecked(id == RMIDI_REWIND);
@@ -295,6 +301,9 @@ void PreferenceDialog::updateRemote()
       recordUndo->setChecked(id == RMIDI_UNDO);
       recordEditMode->setChecked(id == RMIDI_NOTE_EDIT_MODE);
       recordRealtimeAdvance->setChecked(id == RMIDI_REALTIME_ADVANCE);
+      recordToggleLoop->setChecked(id == RMIDI_TOGGLE_LOOP);
+      recordLoopIn->setChecked(id == RMIDI_LOOP_IN);
+      recordLoopOut->setChecked(id == RMIDI_LOOP_OUT);
       }
 
 //---------------------------------------------------------
