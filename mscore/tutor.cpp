@@ -73,18 +73,18 @@ bool Tutor::checkSerial() {
 	perror("tcsetattr() failed: ");
 	return false;
       }
-      // // Waiting for "PianoTutor v1.0 is ready!" string
-      // int to_read = 25;
-      // while (to_read > 0) {
-      // 	char ch;
-      // 	int len = read(tutorSerial, &ch, 1);
-      // 	if (len < 0) {
-      // 	  perror("read() failed: ");
-      // 	  return false;
-      // 	}
-      // 	to_read -= len;
-      // }
-      // //usleep(10000);
+      // Waiting for "PianoTutor v1.0 is ready!" string
+      int to_read = 25;
+      while (to_read > 0) {
+	char ch;
+	int len = read(tutorSerial, &ch, 1);
+	if (len < 0) {
+	  perror("read() failed: ");
+	  return false;
+	}
+	to_read -= len;
+      }
+      usleep(10000);
       return true;
     }
   }
@@ -109,15 +109,19 @@ void Tutor::safe_write(char *data, int len, bool flush_op) {
     last_flushed_ts = now;
 
   // useful to debug/printf() what's about to be written (beware of buffer overruns)
+  int retry = 2;
   data[len] = '\0';
   while (len > 0) {
-    tcdrain(tutorSerial);
     int written = write(tutorSerial, data, len);
     printf("Written %d bytes (len=%d): %s\n", written, len, data);
     if (written < 0) {
       perror("write() failed!");
       close(tutorSerial);
       tutorSerial = -1;
+      if (retry-- > 0) {
+	checkSerial();
+	continue;
+      }
       return;
     }
     data += written;
