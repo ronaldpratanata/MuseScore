@@ -523,7 +523,7 @@ void Seq::playEvent(const NPlayEvent& event, unsigned framePos)
             if (!mute) {
 		putEvent(event, framePos);
 		if (mscore->tutorEnabled()) {
-		  printf("Adding event: pitch=%d, velo=%d, ch=%d\n", event.pitch(), event.velo(), event.channel());
+		  qDebug("Adding event: pitch=%d, velo=%d, ch=%d\n", event.pitch(), event.velo(), event.channel());
 		  tutor()->addKey(event.pitch(), event.velo(), event.channel());
 		  }
 	        }
@@ -675,13 +675,13 @@ void Seq::tutorFutureEvents(EventMap::const_iterator it, EventMap::const_iterato
     int playPosUTick = it->first;
     if (mscore->loop()) {
       int loopOutUTick = cs->repeatList()->tick2utick(cs->loopOutTick());
-      printf("playUTick: %d, loopOut: %d\n", playPosUTick, loopOutUTick);
+      qDebug("playUTick: %d, loopOut: %d\n", playPosUTick, loopOutUTick);
       if (playPosUTick >= loopOutUTick)
 	break;
     }
     qreal playPosSeconds = cs->utick2utime(playPosUTick);
     int playPosFrame = playPosSeconds * MScore::sampleRate;
-    //printf("endFrame: %d, playPosFrame: %d\n", endFrame, playPosFrame);
+    //qDebug("endFrame: %d, playPosFrame: %d\n", endFrame, playPosFrame);
     if (endFrame != -1 && playPosFrame > endFrame)
       break;
     const NPlayEvent& event = it->second;
@@ -697,7 +697,7 @@ void Seq::tutorFutureEvents(EventMap::const_iterator it, EventMap::const_iterato
 	mute = a->mute || a->soloMute || !staff->playbackVoice(note->voice());
       }
       if (!mute && event.velo() > 0) {
-	//printf("Adding future event: pitch=%d, velo=%d, ch=%d\n", event.pitch(), event.velo(), event.channel());
+	//qDebug("Adding future event: pitch=%d, velo=%d, ch=%d\n", event.pitch(), event.velo(), event.channel());
 	tutor()->addKey(event.pitch(), event.velo(), event.channel(), 1);
 	if (endFrame == -1)
 	  endFrame = playPosFrame + framesPerPeriod;
@@ -706,7 +706,7 @@ void Seq::tutorFutureEvents(EventMap::const_iterator it, EventMap::const_iterato
     ++it;
   }
   clock_gettime(CLOCK_REALTIME, &ts_end);
-  //printf("elapsed: %ld us\n", (ts_end.tv_sec - ts_beg.tv_sec) * 1000000 + (ts_end.tv_nsec - ts_beg.tv_nsec) / 1000);
+  //qDebug("elapsed: %ld us\n", (ts_end.tv_sec - ts_beg.tv_sec) * 1000000 + (ts_end.tv_nsec - ts_beg.tv_nsec) / 1000);
 }
 
 //-------------------------------------------------------------------
@@ -818,7 +818,7 @@ void Seq::process(unsigned framesPerPeriod, float* buffer)
             unsigned framePos = 0; // frame currently being processed relative to the first frame of this call to Seq::process
             int periodEndFrame = *pPlayFrame + framesPerPeriod; // the ending frame (relative to start of playback) of the period being processed by this call to Seq::process
             int scoreEndUTick = cs->repeatList()->tick2utick(cs->lastMeasure()->endTick());
-	    //printf("size(): %d\n", tutor()->size());
+	    //qDebug("size(): %d\n", tutor()->size());
 	    if (mscore->tutorEnabled() && mscore->tutorWait() && tutor()->size() > 0) {
 	      if (framesRemain && cs->playMode() == PlayMode::SYNTHESIZER) {
 		//metronome(framesRemain, p, inCountIn);
@@ -1427,7 +1427,7 @@ void Seq::midiInputReady()
       }
 
 void Seq::midiNoteReceived(int channel, int pitch, int velo) {
-  printf("Got MIDI event: ch=%d, pitch=%d, vel=%d\n", channel, pitch, velo);
+  qDebug("Got MIDI event: ch=%d, pitch=%d, vel=%d\n", channel, pitch, velo);
   PianoTutorPanel *ptp = mscore->getPianoTutorPanel();
   if (ptp)
     ptp->midiNoteReceived(channel, pitch, velo);
@@ -1436,12 +1436,12 @@ void Seq::midiNoteReceived(int channel, int pitch, int velo) {
   int future = tutor()->keyPressed(pitch, velo);
   if (future > 0) {
     // speed-up execution jumping to future event playPos
-    printf("Speeding up...\n");
+    qDebug("Speeding up...\n");
     for (auto it = playPos; it != events.end(); ++it) {
       const NPlayEvent& event = it->second;
       if (event.type() == ME_NOTEON && event.pitch() == pitch && event.velo() > 0) {
 	if (it->first > playPos->first) {
-	  printf("Seeking to %d\n", it->first);
+	  qDebug("Seeking to %d\n", it->first);
 	  seek(it->first);
 	}
 	break;
