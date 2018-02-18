@@ -65,6 +65,8 @@ static const int peakHoldTime = 1400;     // msec
 static const int peakHold     = (peakHoldTime * guiRefresh) / 1000;
 static OggVorbis_File vf;
 
+static long lastPlayedNoteOnUTick = -1;
+
 #if 0 // yet(?) unused
 static const int AUDIO_BUFFER_SIZE = 1024 * 512;  // 2 MB
 #endif
@@ -909,6 +911,8 @@ void Seq::process(unsigned framesPerPeriod, float* buffer)
                         }
                   const NPlayEvent& event = (*pPlayPos)->second;
                   playEvent(event, framePos);
+		  if (event.type() == ME_NOTEON)
+		    lastPlayedNoteOnUTick = (*pPlayPos)->first;
                   if (event.type() == ME_TICK1) {
                         tickRemain = tickLength;
                         tickVolume = event.velo() ? qreal(event.value()) / 127.0 : 1.0;
@@ -1654,14 +1658,18 @@ double Seq::curTempo() const
 void Seq::setLoopIn()
       {
       int tick;
-      if (state == Transport::PLAY) {      // If in playback mode, set the In position where note is being played
+      if (state == Transport::PLAY && lastPlayedNoteOnUTick != -1) {
+            tick = cs->repeatList()->utick2tick(lastPlayedNoteOnUTick);
+            }
+      else if (state == Transport::PLAY) {      // If in playback mode, set the In position where note is being played
             auto ppos = playPos;
             if (ppos != events.cbegin())
                   --ppos;                 // We have to go back one pos to get the correct note that has just been played
             tick = cs->repeatList()->utick2tick(ppos->first);
             }
-      else
+      else {
             tick = cs->pos();             // Otherwise, use the selected note.
+            }
       if (tick >= cs->loopOutTick())   // If In pos >= Out pos, reset Out pos to end of score
             cs->setPos(POS::RIGHT, cs->lastMeasure()->endTick());
       cs->setPos(POS::LEFT, tick);
