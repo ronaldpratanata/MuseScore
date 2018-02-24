@@ -28,6 +28,7 @@
 #include "synthesizer/msynthesizer.h"
 #include "preferences.h"
 #include <qmessagebox.h>
+#include <qshortcut.h>
 #include <accessibletoolbutton.h>
 
 namespace Ms {
@@ -361,6 +362,11 @@ void Mixer::patchListChanged()
             PartEdit* pe    = (PartEdit*)(wi->widget());
             pe->mute->setChecked(m.articulation->mute);
             pe->solo->setChecked(m.articulation->solo);
+            QString kseq("Ctrl+Shift+1");
+            kseq[11] = QChar('1' + idx);
+            auto w = new QShortcut(QKeySequence(kseq), pe->solo, SLOT(toggle()));
+            if (w != 0)
+                w->setContext(Qt::ApplicationShortcut);
             idx++;
             }
       }
